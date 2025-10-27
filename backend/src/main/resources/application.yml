@@ -1,0 +1,6 @@
+spring:
+    application:
+        name: Network Drive
+    jpa:
+        hibernate:
+            ddl-auto: update
