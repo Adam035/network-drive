@@ -1,4 +1,4 @@
-package io.github.adam035.networkdrive.user.infrastructure.entity;
+package io.github.adam035.networkdrive.user.infrastructure.persistence.entity;
 
 import io.github.adam035.networkdrive.common.infrastructure.entity.BaseEntity;
 import io.github.adam035.networkdrive.user.domain.model.UserRole;
@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class UserEntity extends BaseEntity {
 
+    @Column(unique = true)
     private String username;
 
     @Column(unique = true)
