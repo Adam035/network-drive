@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Chrome extension",
+  "version": "1.0",
+  "permissions": ["tabs", "storage", "identity"],
+  "host_permissions": [
+    "https://localhost:8080/*"
+  ],
+  "action": {
+    "default_icon": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
