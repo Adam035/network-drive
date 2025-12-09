@@ -13,7 +13,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "files")
 @EqualsAndHashCode(callSuper = true)
-public class FileEntity extends BaseEntity {
+public class FileEntity extends StorageResourceEntity {
 
     @Column(name = "mime_type", nullable = false)
     private String mimeType;

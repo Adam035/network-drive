@@ -9,7 +9,7 @@ import java.util.List;
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true)
-public class Directory extends StorageResource{
+public class Directory extends StorageResource {
 
     private List<StorageResource> children;
 

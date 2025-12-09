@@ -14,7 +14,7 @@ import java.util.List;
 @Entity
 @Table(name = "directories")
 @EqualsAndHashCode(callSuper = true)
-public class DirectoryEntity extends BaseEntity {
+public class DirectoryEntity extends StorageResourceEntity {
 
     private List<StorageResourceEntity> children;
 

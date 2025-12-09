@@ -15,7 +15,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "storage_resources")
 @EqualsAndHashCode(callSuper = true)
-public class StorageResourceEntity extends BaseEntity {
+public abstract class StorageResourceEntity extends BaseEntity {
 
     private String name;
 
