@@ -6,7 +6,7 @@ import org.mapstruct.Mapper;
 
 @Mapper(
         componentModel = "spring",
-        uses = StorageResourceMapper.class
+        uses = UserMapper.class
 )
 public interface FileMapper {
 

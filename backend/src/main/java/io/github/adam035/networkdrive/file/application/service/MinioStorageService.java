@@ -1,14 +1,17 @@
 package io.github.adam035.networkdrive.file.application.service;
 
+import io.github.adam035.networkdrive.file.domain.model.File;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class MinioStorageService implements StorageService {
@@ -18,32 +21,39 @@ public class MinioStorageService implements StorageService {
     private final String bucket;
 
     @Override
-    public void uploadFile(String storageKey, InputStream inputStream, long size, String contentType) {
+    public void uploadFile(File file, InputStream inputStream) {
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucket)
-                            .object(storageKey)
-                            .stream(inputStream, size, -1)
-                            .contentType(contentType)
+                            .object(file.getStorageKey())
+                            .stream(inputStream, file.getSize(), -1)
+                            .contentType(file.getMimeType())
                             .build()
             );
+            log.info(
+                    "File {} uploaded successfully to MinIO with storage key {}",
+                    file.getName(),
+                    file.getStorageKey()
+            );
         } catch (Exception e) {
-            // TODO
+            log.error(e.getMessage());
         }
     }
 
     @Override
     public InputStream downloadFile(String storageKey) {
         try {
-            return minioClient.getObject(
+             InputStream fileContent = minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(bucket)
                             .object(storageKey)
                             .build()
             );
+            log.info("File with storage key {} downloaded successfully from MinIO", storageKey);
+            return fileContent;
         } catch (Exception e) {
-            // TODO
+            log.error(e.getMessage());
             return null;
         }
     }
@@ -57,8 +67,9 @@ public class MinioStorageService implements StorageService {
                             .object(storageKey)
                             .build()
             );
+            log.info("File with storage key {} deleted successfully from MinIO", storageKey);
         } catch (Exception e) {
-            // TODO
+            log.error(e.getMessage());
         }
     }
 

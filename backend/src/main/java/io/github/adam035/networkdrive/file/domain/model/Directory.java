@@ -11,6 +11,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class Directory extends StorageResource {
 
-    private List<StorageResource> children;
+    private List<String> childrenIds;
 
 }

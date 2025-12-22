@@ -13,6 +13,8 @@ public class File extends StorageResource {
 
     private String storageKey;
 
+    private Long size;
+
     private String checksum;
 
 }

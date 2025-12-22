@@ -31,7 +31,8 @@ public class MinioConfig {
                 .build();
     }
 
-    @Bean String bucket() {
+    @Bean
+    public String bucket() {
         return bucket;
     }
 

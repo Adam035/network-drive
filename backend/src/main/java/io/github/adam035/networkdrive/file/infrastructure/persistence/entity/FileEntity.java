@@ -1,9 +1,6 @@
 package io.github.adam035.networkdrive.file.infrastructure.persistence.entity;
 
-import io.github.adam035.networkdrive.common.infrastructure.entity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,15 +10,18 @@ import lombok.Setter;
 @Entity
 @Table(name = "files")
 @EqualsAndHashCode(callSuper = true)
+@PrimaryKeyJoinColumn(name = "id")
 public class FileEntity extends StorageResourceEntity {
 
     @Column(name = "mime_type", nullable = false)
     private String mimeType;
 
-    @Column(name = "storage_key", nullable = false, unique = true)
+    @Column(name = "storage_key", nullable = false, unique = true, updatable = false)
     private String storageKey;
 
-    @Column(nullable = false)
+    private Long size;
+
+    // TODO: @Column(nullable = false)
     private String checksum;
 
 }

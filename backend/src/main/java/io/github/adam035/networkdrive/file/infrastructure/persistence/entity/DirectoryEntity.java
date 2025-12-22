@@ -1,11 +1,11 @@
 package io.github.adam035.networkdrive.file.infrastructure.persistence.entity;
 
-import io.github.adam035.networkdrive.common.infrastructure.entity.BaseEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.List;
 
@@ -14,8 +14,11 @@ import java.util.List;
 @Entity
 @Table(name = "directories")
 @EqualsAndHashCode(callSuper = true)
+@PrimaryKeyJoinColumn(name = "id")
 public class DirectoryEntity extends StorageResourceEntity {
 
-    private List<StorageResourceEntity> children;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private List<String> childrenIds;
 
 }

@@ -5,12 +5,14 @@ import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Immutable;
 
 @Getter
 @Setter
-@Entity
+@Entity(name = "storageUserEntity")
 @Table(name = "users")
 @EqualsAndHashCode(callSuper = true)
+@Immutable
 public class UserEntity extends BaseEntity {
 
     @Column(unique = true)

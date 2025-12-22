@@ -6,10 +6,7 @@ import io.github.adam035.networkdrive.file.domain.model.StorageResource;
 import io.github.adam035.networkdrive.file.infrastructure.persistence.entity.DirectoryEntity;
 import io.github.adam035.networkdrive.file.infrastructure.persistence.entity.FileEntity;
 import io.github.adam035.networkdrive.file.infrastructure.persistence.entity.StorageResourceEntity;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.SubclassExhaustiveStrategy;
-import org.mapstruct.SubclassMapping;
+import org.mapstruct.*;
 
 @Mapper(
         componentModel = "spring",
@@ -23,11 +20,13 @@ public interface StorageResourceMapper {
     @BeanMapping(subclassExhaustiveStrategy = SubclassExhaustiveStrategy.RUNTIME_EXCEPTION)
     @SubclassMapping(source = FileEntity.class, target = File.class)
     @SubclassMapping(source = DirectoryEntity.class, target = Directory.class)
+    @Mapping(source = "id", target = "storageResourceId")
     StorageResource mapToModel(StorageResourceEntity source);
 
     @BeanMapping(subclassExhaustiveStrategy = SubclassExhaustiveStrategy.RUNTIME_EXCEPTION)
     @SubclassMapping(source = File.class, target = FileEntity.class)
     @SubclassMapping(source = Directory.class, target = DirectoryEntity.class)
+    @Mapping(source = "id", target = "storageResourceId")
     StorageResourceEntity mapToEntity(StorageResource source);
 
 }

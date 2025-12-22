@@ -4,6 +4,6 @@ import io.github.adam035.networkdrive.file.infrastructure.persistence.entity.Use
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-@Repository
+@Repository("storageUserJpaRepository")
 interface UserJpaRepository extends JpaRepository<UserEntity, String> {
 }
