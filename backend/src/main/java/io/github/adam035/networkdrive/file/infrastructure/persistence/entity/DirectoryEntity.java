@@ -19,6 +19,6 @@ public class DirectoryEntity extends StorageResourceEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private List<String> childrenIds;
+    private List<String> childIds;
 
 }

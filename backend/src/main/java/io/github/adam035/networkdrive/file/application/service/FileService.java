@@ -49,4 +49,8 @@ public class FileService {
                 });
     }
 
+    public void deleteFile(String fileId) {
+        fileRepository.deleteById(fileId);
+    }
+
 }

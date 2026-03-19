@@ -1,15 +1,15 @@
 package io.github.adam035.networkdrive.file.application.service;
 
 import io.github.adam035.networkdrive.file.domain.model.File;
-import io.minio.GetObjectArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.RemoveObjectArgs;
+import io.minio.*;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -71,6 +71,28 @@ public class MinioStorageService implements StorageService {
         } catch (Exception e) {
             log.error(e.getMessage());
         }
+    }
+
+    public void deleteFiles(List<String> storageKeys) {
+        List<DeleteObject> deleteObjects = storageKeys.stream()
+                .map(DeleteObject::new)
+                .toList();
+
+        minioClient.removeObjects(
+                RemoveObjectsArgs.builder()
+                        .bucket(bucket)
+                        .objects(deleteObjects)
+                        .build()
+        )
+                .forEach(result -> {
+                    try {
+                        DeleteError deleteError = result.get();
+                        log.error(deleteError.toString());
+                    } catch (Exception e) {
+                        log.error(e.getMessage());
+                    }
+                });
+
     }
 
 }

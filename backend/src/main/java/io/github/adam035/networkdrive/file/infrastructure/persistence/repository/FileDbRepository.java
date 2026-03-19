@@ -7,6 +7,7 @@ import io.github.adam035.networkdrive.file.infrastructure.persistence.mapper.Fil
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -27,6 +28,18 @@ public class FileDbRepository implements FileRepository {
     public Optional<File> findById(String id) {
         return fileJpaRepository.findById(id)
                 .map(fileMapper::mapToModel);
+    }
+
+    @Override
+    public List<File> findAllById(List<String> ids) {
+        return fileJpaRepository.findAllById(ids).stream()
+                .map(fileMapper::mapToModel)
+                .toList();
+    }
+
+    @Override
+    public void deleteById(String id) {
+        fileJpaRepository.deleteById(id);
     }
 
 }

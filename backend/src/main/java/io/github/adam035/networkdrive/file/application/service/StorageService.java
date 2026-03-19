@@ -3,6 +3,7 @@ package io.github.adam035.networkdrive.file.application.service;
 import io.github.adam035.networkdrive.file.domain.model.File;
 
 import java.io.InputStream;
+import java.util.List;
 
 interface StorageService {
 
@@ -11,5 +12,7 @@ interface StorageService {
     InputStream downloadFile(String storageKey);
 
     void deleteFile(String storageKey);
+
+    void deleteFiles(List<String> storageKeys);
 
 }

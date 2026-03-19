@@ -33,4 +33,9 @@ public class FileController {
                 .body(new InputStreamResource(fileDownloadResponse.fileContent()));
     }
 
+    @DeleteMapping("/{fileId}")
+    public void delete(@PathVariable String fileId) {
+        fileService.deleteFile(fileId);
+    }
+
 }

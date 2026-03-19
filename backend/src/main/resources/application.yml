@@ -11,10 +11,10 @@ spring:
     jpa:
         hibernate:
             ddl-auto: update
-        show-sql: true
+        show-sql: false
         properties:
             hibernate:
-                format_sql: true
+                format_sql: false
                 dialect: org.hibernate.dialect.PostgreSQLDialect
 
 minio:
@@ -22,3 +22,9 @@ minio:
     bucket: ${MINIO_BUCKET}
     access-key: ${MINIO_ACCESS_KEY}
     secret-key: ${MINIO_SECRET_KEY}
+
+logging:
+    level:
+        root: INFO
+        io.github.adam035.networkdrive: DEBUG
+        org.hibernate.SQL: DEBUG
