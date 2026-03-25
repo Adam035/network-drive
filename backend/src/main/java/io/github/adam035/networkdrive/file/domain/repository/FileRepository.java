@@ -13,6 +13,6 @@ public interface FileRepository {
 
     List<File> findAllById(List<String> ids);
 
-    void deleteById(String id);
+    Optional<File> deleteById(String id);
 
 }

@@ -38,8 +38,11 @@ public class FileDbRepository implements FileRepository {
     }
 
     @Override
-    public void deleteById(String id) {
-        fileJpaRepository.deleteById(id);
+    public Optional<File> deleteById(String id) {
+        Optional<File> optionalFile = findById(id);
+        optionalFile.ifPresent(file -> fileJpaRepository.deleteById(file.getId()));
+
+        return optionalFile;
     }
 
 }

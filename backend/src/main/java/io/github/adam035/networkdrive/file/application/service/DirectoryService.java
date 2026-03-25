@@ -2,6 +2,7 @@ package io.github.adam035.networkdrive.file.application.service;
 
 import io.github.adam035.networkdrive.file.api.dto.DirectoryCreationRequest;
 import io.github.adam035.networkdrive.file.application.exception.ResourceNotFoundException;
+import io.github.adam035.networkdrive.file.application.mapper.DirectoryCreationRequestMapper;
 import io.github.adam035.networkdrive.file.domain.model.Directory;
 import io.github.adam035.networkdrive.file.domain.model.File;
 import io.github.adam035.networkdrive.file.domain.repository.DirectoryRepository;
@@ -22,33 +23,30 @@ public class DirectoryService {
 
     private final FileRepository fileRepository;
 
-    private DirectoryRepository directoryRepository;
+    private final DirectoryRepository directoryRepository;
 
-    private StorageResourceRepository storageResourceRepository;
+    private final StorageResourceRepository storageResourceRepository;
 
-    private StorageService storageService;
+    private final StorageService storageService;
 
-    public void createDirectory(DirectoryCreationRequest directoryCreationRequest) {
-        if (directoryCreationRequest.parentId() == null) {
-            directoryRepository.save(new Directory());
-            return;
+    private final DirectoryCreationRequestMapper directoryCreationRequestMapper;
+
+    @Transactional
+    public Directory createDirectory(DirectoryCreationRequest directoryCreationRequest) {
+        Directory directory = directoryCreationRequestMapper.mapToModel(directoryCreationRequest);
+        Directory savedDirectory = directoryRepository.save(directory);
+
+        if (savedDirectory.getParentId() != null) {
+            directoryRepository.findById(savedDirectory.getParentId())
+                    .ifPresent(parentDirectory -> {
+                        parentDirectory.getChildIds().add(savedDirectory.getId());
+                        directoryRepository.save(parentDirectory);
+                    });
         }
 
-        directoryRepository.findById(directoryCreationRequest.parentId())
-                .ifPresentOrElse(
-                        parentDirectory -> {
-                            Directory directory = new Directory();
-                            directory.setParentId(parentDirectory.getId());
-                            Directory savedDirectory = directoryRepository.save(directory);
+        log.info("Successfully created directory: {}", savedDirectory.getId());
 
-                            parentDirectory.getChildIds().add(savedDirectory.getId());
-                            directoryRepository.save(parentDirectory);
-                        },
-                        () -> {
-                            log.error("Create directory failed");
-                            throw new ResourceNotFoundException("Parent directory not found");
-                        }
-                );
+        return savedDirectory;
     }
 
     public Directory getDirectory(String id) {
@@ -72,7 +70,6 @@ public class DirectoryService {
                             .toList();
 
                     storageService.deleteFiles(storageKeys);
-
                     storageResourceRepository.deleteAllById(ids);
 
                     if (directory.getParentId() != null) {
