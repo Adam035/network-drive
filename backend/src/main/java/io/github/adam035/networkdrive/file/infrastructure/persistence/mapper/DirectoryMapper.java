@@ -4,10 +4,7 @@ import io.github.adam035.networkdrive.file.domain.model.Directory;
 import io.github.adam035.networkdrive.file.infrastructure.persistence.entity.DirectoryEntity;
 import org.mapstruct.Mapper;
 
-@Mapper(
-        componentModel = "spring",
-        uses = UserMapper.class
-)
+@Mapper(componentModel = "spring")
 public interface DirectoryMapper {
 
     Directory mapToModel(DirectoryEntity source);

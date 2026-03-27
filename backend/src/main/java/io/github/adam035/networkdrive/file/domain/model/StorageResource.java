@@ -18,7 +18,7 @@ public abstract class StorageResource {
 
     private String parentId;
 
-    private User owner;
+    private String ownerId;
 
     private StorageResourceType type;
 

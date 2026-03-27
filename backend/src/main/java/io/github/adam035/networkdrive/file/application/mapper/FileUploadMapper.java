@@ -12,6 +12,7 @@ public interface FileUploadMapper {
     @Mapping(target = "mimeType", source = "file.contentType")
     @Mapping(target = "size", source = "file.size")
     @Mapping(target = "parentId", source = "parentId")
+    @Mapping(target = "ownerId", source = "ownerId")
     @Mapping(target = "storageKey", expression = "java(java.util.UUID.randomUUID().toString())")
     @Mapping(target = "type", expression = "java(io.github.adam035.networkdrive.file.domain.model.StorageResourceType.FILE)")
     File mapToModel(FileUploadRequest source);

@@ -20,9 +20,8 @@ public abstract class StorageResourceEntity extends BaseEntity {
     @JoinColumn(name = "parent_id")
     private String parentId;
 
-    @ManyToOne
     @JoinColumn(name = "owner_id")
-    private UserEntity owner;
+    private String ownerId;
 
     private StorageResourceType type;
 
