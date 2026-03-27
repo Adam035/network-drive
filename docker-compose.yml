@@ -1,0 +1,51 @@
+services:
+
+  backend:
+    build: ./backend
+    container_name: backend
+    env_file:
+      - ./backend/.env
+    networks:
+      - network-drive-net
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - minio
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: network-drive-postgres
+    env_file:
+      - ./database/.env
+    ports:
+      - "5432:5432"
+    networks:
+      - network-drive-net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio-storage
+    env_file:
+      - ./storage/.env
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - network-drive-net
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  network-drive-net:
+    driver: bridge
