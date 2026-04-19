@@ -14,8 +14,7 @@ public interface RegistrationResultMapper {
         credential.setPublicKey(result.getPublicKeyCose().getBytes());
         credential.setSignatureCount(result.getSignatureCount());
         credential.setUser(user);
-        result.isDiscoverable()
-                .ifPresent(credential::setIsDiscoverable);
+        result.isDiscoverable().ifPresent(credential::setIsDiscoverable);
 
         return credential;
     }

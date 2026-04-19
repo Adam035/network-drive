@@ -11,6 +11,7 @@ import io.github.adam035.networkdrive.auth.infrastructure.persistence.mapper.Cre
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,14 +51,15 @@ class CredentialDbRepository implements CredentialRepository, com.yubico.webauth
 
     @Override
     public Optional<String> getUsernameForUserHandle(ByteArray userId) {
-        return userRepository.findById(userId.getBase64())
+        return userRepository.findById(new String(userId.getBytes(), StandardCharsets.UTF_8))
                 .map(User::getUsername);
     }
 
     @Override
     public Optional<RegisteredCredential> lookup(ByteArray authenticatorId, ByteArray userId) {
+        String decodedUserId = new String(userId.getBytes(), StandardCharsets.UTF_8);
         return credentialJpaRepository
-                .findByAuthenticatorIdAndUserId(authenticatorId.getBytes(), userId.getBase64())
+                .findByAuthenticatorIdAndUserId(authenticatorId.getBytes(), decodedUserId)
                 .map(credentialMapper::mapToRegisteredCredential);
     }
 

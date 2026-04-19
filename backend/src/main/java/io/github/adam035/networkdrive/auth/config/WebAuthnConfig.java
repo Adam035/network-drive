@@ -15,15 +15,12 @@ public class WebAuthnConfig {
     public RelyingParty relyingParty(CredentialRepository credentialRepository) {
         return RelyingParty.builder()
                 .identity(RelyingPartyIdentity.builder()
-                        .id("localhost")
+                        .id("network-drive.local")
                         .name("Network Drive")
                         .build()
                 )
                 .credentialRepository(credentialRepository)
-                .origins(Set.of(
-                        "http://localhost:8080",
-                        System.getenv("CHROME_EXTENSION")
-                ))
+                .origins(Set.of("https://network-drive.local"))
                 .build();
     }
 

@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.TemporalAmount;
 import java.util.Date;
@@ -17,24 +16,31 @@ import java.util.function.Function;
 @AllArgsConstructor
 public class JwtService {
 
-    private static final TemporalAmount TTL = Duration.ofMinutes(5);
-
     private final SecretKey secretKey;
 
-    public String generateToken(String subject, Map<String, Object> claims) {
+    public String generateToken(String subject, Map<String, Object> claims, TemporalAmount ttl) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .claims(claims)
                 .subject(subject)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(TTL)))
+                .expiration(Date.from(now.plus(ttl)))
                 .signWith(secretKey)
                 .compact();
     }
 
+    public boolean validateToken(String token) {
+        return !isTokenExpired(token);
+    }
+
     public boolean validateToken(String token, String subject) {
         String extractedSubject = extractClaim(token, Claims::getSubject);
-        return (extractedSubject.equals(subject) && !isTokenExpired(token));
+        return extractedSubject.equals(subject) && validateToken(token);
+    }
+
+    public boolean validateToken(String token, String subject, String tokenType) {
+        String extractedTokenType = extractClaim(token, claims -> claims.get("token_type", String.class));
+        return validateToken(token, subject) && extractedTokenType.equals(tokenType);
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {

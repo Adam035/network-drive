@@ -16,7 +16,7 @@ public class CorsConfig {
             public void addCorsMappings(@Nullable CorsRegistry registry) {
                 assert registry != null;
                 registry.addMapping("/**")
-                        .allowedOrigins(System.getenv("CHROME_EXTENSION"))
+                        .allowedOrigins("https://network-drive.local")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowCredentials(true);
             }

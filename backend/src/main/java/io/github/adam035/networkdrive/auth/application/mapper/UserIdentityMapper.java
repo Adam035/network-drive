@@ -5,6 +5,8 @@ import com.yubico.webauthn.data.UserIdentity;
 import io.github.adam035.networkdrive.auth.domain.model.User;
 import org.mapstruct.Mapper;
 
+import java.nio.charset.StandardCharsets;
+
 @Mapper(componentModel = "spring")
 public interface UserIdentityMapper {
 
@@ -12,7 +14,7 @@ public interface UserIdentityMapper {
         return UserIdentity.builder()
                 .name(source.getUsername())
                 .displayName(source.getUsername())
-                .id(new ByteArray(source.getId().getBytes()))
+                .id(new ByteArray(source.getId().getBytes(StandardCharsets.UTF_8)))
                 .build();
     }
 
