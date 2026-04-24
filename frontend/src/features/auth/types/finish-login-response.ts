@@ -1,9 +1,8 @@
-import type { User } from "./user.ts";
+import type { AuthTokensResponse } from "./auth-tokens-response.ts";
 
 export interface FinishLoginResponse {
-    isLoginSuccessful: boolean;
+    authTokens?: AuthTokensResponse;
     message: string;
-    user?: User;
 }
 
 export type LoginResponse = FinishLoginResponse;
