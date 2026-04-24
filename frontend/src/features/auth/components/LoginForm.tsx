@@ -16,8 +16,9 @@ export const LoginForm = () => {
             const response = await login();
 
             if (!response) return;
+            console.log(response)
 
-            if (response.user) {
+            if (response.authTokens) {
                 setSuccessMessage(response.message);
                 setErrorMessage("");
                 return;

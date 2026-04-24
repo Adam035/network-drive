@@ -25,15 +25,11 @@ export const RegisterForm = () => {
 
             if (!response) return;
 
-            if (response.user) {
-                setSuccessMessage(response.message);
-                setErrorMessage("");
-                return;
-            }
-            setSuccessMessage("")
-            setErrorMessage(response.message);
+            setSuccessMessage(response.message);
+            setErrorMessage("");
         } catch (error) {
             console.error(error);
+            setSuccessMessage("");
             setErrorMessage("An error occurred during registration. Please try again later.");
         } finally {
             setIsLoading(false);

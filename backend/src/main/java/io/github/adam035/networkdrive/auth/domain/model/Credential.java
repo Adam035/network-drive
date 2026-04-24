@@ -15,6 +15,6 @@ public class Credential {
 
     private Boolean isDiscoverable;
 
-    private User user;
+    private String userId;
 
 }

@@ -1,6 +1,6 @@
 package io.github.adam035.networkdrive.file.infrastructure.persistence.entity;
 
-import io.github.adam035.networkdrive.common.infrastructure.entity.BaseEntity;
+import io.github.adam035.networkdrive.common.infrastructure.outbound.persistence.entity.BaseEntity;
 import io.github.adam035.networkdrive.file.domain.model.StorageResourceType;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
