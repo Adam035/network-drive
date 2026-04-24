@@ -8,7 +8,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 export const startRegistration = async (
     startRegistrationRequest: StartRegistrationRequest,
 ): Promise<StartRegistrationResponse> => {
-    const response = await fetch(`${BACKEND_URL}/auth/register/start`, {
+    const response = await fetch(`${BACKEND_URL}/api/auth/register/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(startRegistrationRequest),
@@ -20,7 +20,7 @@ export const startRegistration = async (
 export const finishRegistration = async (
     finishRegistrationRequest: FinishRegistrationRequest,
 ): Promise<FinishRegistrationResponse> => {
-    const response = await fetch(`${BACKEND_URL}/auth/register/finish`, {
+    const response = await fetch(`${BACKEND_URL}/api/auth/register/finish`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(finishRegistrationRequest),
