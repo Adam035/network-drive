@@ -5,6 +5,7 @@ import io.github.adam035.networkdrive.auth.infrastructure.inbound.web.dto.Rotate
 import io.github.adam035.networkdrive.auth.application.usecase.RotateTokensUseCase;
 import io.github.adam035.networkdrive.auth.infrastructure.inbound.web.mapper.AuthTokenMapper;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,9 +21,15 @@ public class AuthTokenController {
     private final AuthTokenMapper authTokenMapper;
 
     @PostMapping("/rotate")
-    public AuthTokensResponse rotateAuthTokens(@RequestBody RotateTokensRequest rotateTokensRequest) {
-        String refreshToken = rotateTokensRequest.refreshToken();
-        return authTokenMapper.mapToAuthTokensResponse(rotateTokensUseCase.rotateAuthTokens(refreshToken));
+    public ResponseEntity<AuthTokensResponse> rotateAuthTokens(@RequestBody RotateTokensRequest rotateTokensRequest) {
+        AuthTokensResponse authTokensResponse = authTokenMapper.mapToAuthTokensResponse(
+                rotateTokensUseCase.rotateAuthTokens(rotateTokensRequest.refreshToken())
+        );
+
+        return ResponseEntity.ok()
+                .header("Set-Cookie", String.format("accessToken=%s; HttpOnly; Secure;", authTokensResponse.accessToken()))
+                .header("Set-Cookie", String.format("refreshToken=%s; HttpOnly; Secure;", authTokensResponse.refreshToken()))
+                .body(authTokensResponse);
     }
 
 }

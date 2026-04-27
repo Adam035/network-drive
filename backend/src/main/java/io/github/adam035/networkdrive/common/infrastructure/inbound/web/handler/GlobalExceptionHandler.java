@@ -4,6 +4,7 @@ import io.github.adam035.networkdrive.auth.application.exception.InvalidJwtExcep
 import io.github.adam035.networkdrive.auth.application.exception.LoginException;
 import io.github.adam035.networkdrive.auth.application.exception.RegistrationException;
 import io.github.adam035.networkdrive.auth.domain.exception.UserAlreadyExistsException;
+import io.github.adam035.networkdrive.common.application.exception.UnauthorizedException;
 import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +37,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(LoginException.class)
     public ResponseEntity<Map<String, String>> handleRegistrationException(LoginException exception) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Map<String, String>> handleUnauthorizedException(UnauthorizedException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", exception.getMessage()));
     }
 

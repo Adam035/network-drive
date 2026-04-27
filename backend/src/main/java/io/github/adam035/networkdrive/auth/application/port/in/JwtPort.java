@@ -14,6 +14,8 @@ public interface JwtPort {
 
     boolean validateToken(String token, String subject);
 
+    boolean validateTokenType(String token, String tokenType);
+
     boolean validateToken(String token, String subject, String tokenType);
 
     <T> T extractClaim(String token, Function<Claims, T> claimsResolver);
