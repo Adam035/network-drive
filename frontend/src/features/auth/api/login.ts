@@ -7,6 +7,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 export const startLogin = async (): Promise<StartLoginResponse> => {
     const response = await fetch(`${BACKEND_URL}/api/auth/login/start`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
     });
 
@@ -18,6 +19,7 @@ export const finishLogin = async (
 ): Promise<FinishLoginResponse> => {
     const response = await fetch(`${BACKEND_URL}/api/auth/login/finish`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(finishLoginRequest),
     });

@@ -39,6 +39,11 @@ public class JwtAdapter implements JwtPort {
         return extractedSubject.equals(subject) && validateToken(token);
     }
 
+    public boolean validateTokenType(String token, String tokenType) {
+        String extractedTokenType = extractClaim(token, claims -> claims.get("token_type", String.class));
+        return extractedTokenType.equals(tokenType) && validateToken(token);
+    }
+
     public boolean validateToken(String token, String subject, String tokenType) {
         String extractedTokenType = extractClaim(token, claims -> claims.get("token_type", String.class));
         return validateToken(token, subject) && extractedTokenType.equals(tokenType);

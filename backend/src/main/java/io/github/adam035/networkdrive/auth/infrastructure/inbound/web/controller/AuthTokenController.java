@@ -1,14 +1,15 @@
 package io.github.adam035.networkdrive.auth.infrastructure.inbound.web.controller;
 
 import io.github.adam035.networkdrive.auth.infrastructure.inbound.web.dto.AuthTokensResponse;
-import io.github.adam035.networkdrive.auth.infrastructure.inbound.web.dto.RotateTokensRequest;
 import io.github.adam035.networkdrive.auth.application.usecase.RotateTokensUseCase;
 import io.github.adam035.networkdrive.auth.infrastructure.inbound.web.mapper.AuthTokenMapper;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
 
 @RestController
 @AllArgsConstructor
@@ -20,9 +21,31 @@ public class AuthTokenController {
     private final AuthTokenMapper authTokenMapper;
 
     @PostMapping("/rotate")
-    public AuthTokensResponse rotateAuthTokens(@RequestBody RotateTokensRequest rotateTokensRequest) {
-        String refreshToken = rotateTokensRequest.refreshToken();
-        return authTokenMapper.mapToAuthTokensResponse(rotateTokensUseCase.rotateAuthTokens(refreshToken));
+    public ResponseEntity<AuthTokensResponse> rotateAuthTokens(@CookieValue("refreshToken") String refreshToken) {
+        AuthTokensResponse authTokensResponse = authTokenMapper.mapToAuthTokensResponse(
+                rotateTokensUseCase.rotateAuthTokens(refreshToken)
+        );
+
+        ResponseCookie access = ResponseCookie.from("accessToken", authTokensResponse.accessToken())
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(Duration.ofMinutes(5))
+                .build();
+
+        ResponseCookie refresh = ResponseCookie.from("refreshToken", authTokensResponse.refreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(Duration.ofDays(1))
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, access.toString())
+                .header(HttpHeaders.SET_COOKIE, refresh.toString())
+                .body(authTokensResponse);
     }
 
 }
