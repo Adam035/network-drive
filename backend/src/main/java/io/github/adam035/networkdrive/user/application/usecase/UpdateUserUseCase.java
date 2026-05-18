@@ -20,7 +20,11 @@ public class UpdateUserUseCase {
     public User updateUser(User user) {
         log.info("Updating user {}", user.getId());
 
-        if (authTokenExtractorPort.extractSubject().equals(user.getId())) {
+        if (user.getId() == null || user.getId().isBlank()) {
+            throw new IllegalArgumentException("userId cannot be null or empty");
+        }
+
+        if (!authTokenExtractorPort.extractSubject().equals(user.getId())) {
             throw new UnauthorizedException("Unauthorized");
         }
 

@@ -10,6 +10,7 @@ export const startRegistration = async (
 ): Promise<StartRegistrationResponse> => {
     const response = await fetch(`${BACKEND_URL}/api/auth/register/start`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(startRegistrationRequest),
     });
@@ -22,6 +23,7 @@ export const finishRegistration = async (
 ): Promise<FinishRegistrationResponse> => {
     const response = await fetch(`${BACKEND_URL}/api/auth/register/finish`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(finishRegistrationRequest),
     });

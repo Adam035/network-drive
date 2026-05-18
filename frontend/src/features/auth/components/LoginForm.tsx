@@ -1,8 +1,10 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../../providers/AuthProvider.tsx";
 
 export const LoginForm = () => {
+    const navigate = useNavigate();
     const { login } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
@@ -21,6 +23,7 @@ export const LoginForm = () => {
             if (response.authTokens) {
                 setSuccessMessage(response.message);
                 setErrorMessage("");
+                setTimeout(() => navigate("/profile"), 1000);
                 return;
             }
             setSuccessMessage("")
