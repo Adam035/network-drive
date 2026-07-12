@@ -1,5 +1,6 @@
 package io.github.adam035.networkdrive.file.application.service;
 
+import io.github.adam035.networkdrive.common.application.port.in.AuthTokenExtractorPort;
 import io.github.adam035.networkdrive.file.api.dto.FileDownloadResponse;
 import io.github.adam035.networkdrive.file.api.dto.FileUploadRequest;
 import io.github.adam035.networkdrive.file.application.exception.ResourceNotFoundException;
@@ -20,6 +21,8 @@ import java.io.InputStream;
 @AllArgsConstructor
 public class FileService {
 
+    private final AuthTokenExtractorPort authTokenExtractorPort;
+
     private final StorageService storageService;
 
     private final FileRepository fileRepository;
@@ -30,7 +33,8 @@ public class FileService {
 
     @Transactional
     public File uploadFile(FileUploadRequest fileUploadRequest) {
-        File file = fileUploadMapper.mapToModel(fileUploadRequest);
+        String ownerId = authTokenExtractorPort.extractSubject();
+        File file = fileUploadMapper.mapToModel(fileUploadRequest, ownerId);
         File savedFile = fileRepository.save(file);
 
         if (savedFile.getParentId() != null) {
