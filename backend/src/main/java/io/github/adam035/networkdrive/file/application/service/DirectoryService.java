@@ -1,5 +1,6 @@
 package io.github.adam035.networkdrive.file.application.service;
 
+import io.github.adam035.networkdrive.common.application.port.in.AuthTokenExtractorPort;
 import io.github.adam035.networkdrive.file.api.dto.DirectoryCreationRequest;
 import io.github.adam035.networkdrive.file.application.exception.ResourceNotFoundException;
 import io.github.adam035.networkdrive.file.application.mapper.DirectoryCreationRequestMapper;
@@ -21,6 +22,8 @@ import java.util.List;
 @AllArgsConstructor
 public class DirectoryService {
 
+    private final AuthTokenExtractorPort authTokenExtractorPort;
+
     private final FileRepository fileRepository;
 
     private final DirectoryRepository directoryRepository;
@@ -33,7 +36,8 @@ public class DirectoryService {
 
     @Transactional
     public Directory createDirectory(DirectoryCreationRequest directoryCreationRequest) {
-        Directory directory = directoryCreationRequestMapper.mapToModel(directoryCreationRequest);
+        String ownerId = authTokenExtractorPort.extractSubject();
+        Directory directory = directoryCreationRequestMapper.mapToModel(directoryCreationRequest, ownerId);
         Directory savedDirectory = directoryRepository.save(directory);
 
         if (savedDirectory.getParentId() != null) {
