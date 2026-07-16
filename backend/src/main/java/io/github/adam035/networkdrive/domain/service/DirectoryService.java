@@ -50,36 +50,4 @@ public class DirectoryService {
         file.setParentId(directory.getId());
     }
 
-    public Directory getDirectory(String id) {
-        return directoryRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Attempted to find non-existent directory: {}", id);
-                    return new StorageResourceNotFoundException();
-                });
-    }
-
-//    public void deleteDirectory(String id) {
-//        directoryRepository.findById(id)
-//                .ifPresent(directory -> {
-//                    List<String> childIds = directoryRepository.findAllChildIds(directory.getId());
-//                    List<String> ids = new ArrayList<>(childIds);
-//                    ids.add(id);
-//
-//                    List<String> storageKeys = fileRepository.findAllById(ids).stream()
-//                            .map(File::getStorageKey)
-//                            .toList();
-//
-//                    storageService.deleteFiles(storageKeys);
-//                    storageResourceRepository.deleteAllById(ids);
-//
-//                    if (directory.getParentId() != null) {
-//                        directoryRepository.findById(directory.getParentId())
-//                                .ifPresent(parentDirectory -> {
-//                                    parentDirectory.getChildIds().remove(directory.getId());
-//                                    directoryRepository.save(parentDirectory);
-//                                });
-//                    }
-//                });
-//    }
-
 }
