@@ -4,6 +4,7 @@ import io.github.adam035.networkdrive.application.port.StoragePort;
 import io.github.adam035.networkdrive.domain.exception.StorageResourceNotFoundException;
 import io.github.adam035.networkdrive.domain.model.Directory;
 import io.github.adam035.networkdrive.domain.model.File;
+import io.github.adam035.networkdrive.domain.model.StorageResource;
 import io.github.adam035.networkdrive.domain.model.User;
 import io.github.adam035.networkdrive.domain.repository.DirectoryRepository;
 import io.github.adam035.networkdrive.domain.repository.FileRepository;
@@ -45,9 +46,15 @@ public class DirectoryService {
         return directoryRepository.findByPath(parentDirectoryPath);
     }
 
-    public void addFile(Directory directory, File file) {
-        directory.setSize(directory.getSize() + file.getSize());
-        file.setParentId(directory.getId());
+    public void addStorageResource(Directory directory, StorageResource storageResource) {
+        directoryRepository.findById(directory.getParentId())
+                .ifPresent(parent -> {
+                    parent.setSize(parent.getSize() + storageResource.getSize());
+                    directoryRepository.save(parent);
+                });
+
+        directory.setSize(directory.getSize() + storageResource.getSize());
+        storageResource.setParentId(directory.getId());
     }
 
 }
