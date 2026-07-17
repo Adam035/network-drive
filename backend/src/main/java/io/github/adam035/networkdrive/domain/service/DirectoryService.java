@@ -1,14 +1,9 @@
 package io.github.adam035.networkdrive.domain.service;
 
-import io.github.adam035.networkdrive.application.port.StoragePort;
-import io.github.adam035.networkdrive.domain.exception.StorageResourceNotFoundException;
 import io.github.adam035.networkdrive.domain.model.Directory;
-import io.github.adam035.networkdrive.domain.model.File;
 import io.github.adam035.networkdrive.domain.model.StorageResource;
 import io.github.adam035.networkdrive.domain.model.User;
 import io.github.adam035.networkdrive.domain.repository.DirectoryRepository;
-import io.github.adam035.networkdrive.domain.repository.FileRepository;
-import io.github.adam035.networkdrive.domain.repository.StorageResourceRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,13 +15,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class DirectoryService {
 
-    private final FileRepository fileRepository;
-
     private final DirectoryRepository directoryRepository;
-
-    private final StorageResourceRepository storageResourceRepository;
-
-    private final StoragePort storageService;
 
     public Directory createDirectory(String path, Directory parentDirectory, User owner) {
         String name = path.substring(path.lastIndexOf('/') + 1);
