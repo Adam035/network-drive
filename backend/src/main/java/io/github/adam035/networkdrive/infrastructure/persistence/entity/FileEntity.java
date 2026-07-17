@@ -19,8 +19,6 @@ public class FileEntity extends StorageResourceEntity {
     @Column(name = "storage_key", nullable = false, unique = true, updatable = false)
     private String storageKey;
 
-    private Long size;
-
     // TODO: @Column(nullable = false)
     private String checksum;
 
