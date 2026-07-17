@@ -51,7 +51,7 @@ public class UploadFileUseCase {
             throw new UnauthorizedException();
         }
 
-        File file = fileUploadMapper.mapToModel(multipartFile, user);
+        File file = fileUploadMapper.mapToModel(multipartFile, path, user);
 
         try {
             storagePort.uploadFile(file, multipartFile.getInputStream());
@@ -59,7 +59,7 @@ public class UploadFileUseCase {
             throw new FileUploadException();
         }
 
-        directoryService.addFile(parentDirectory, file);
+        directoryService.addStorageResource(parentDirectory, file);
         directoryRepository.save(parentDirectory);
 
         return fileRepository.save(file);
