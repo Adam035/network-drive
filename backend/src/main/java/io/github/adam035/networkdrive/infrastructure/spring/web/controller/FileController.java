@@ -5,6 +5,7 @@ import io.github.adam035.networkdrive.application.usecase.UploadFileUseCase;
 import io.github.adam035.networkdrive.application.dto.FileDownloadResult;
 import io.github.adam035.networkdrive.infrastructure.spring.web.dto.FileUploadRequest;
 import io.github.adam035.networkdrive.domain.model.File;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
@@ -27,8 +28,9 @@ public class FileController {
         return uploadFileUseCase.uploadFile(fileUploadRequest.multipartFile(), fileUploadRequest.path());
     }
 
-    @GetMapping
-    public ResponseEntity<InputStreamResource> downloadFile(@RequestParam String path) {
+    @GetMapping("/**")
+    public ResponseEntity<InputStreamResource> downloadFile(HttpServletRequest request) {
+        String path = request.getRequestURI().replace("/files", "");
         FileDownloadResult fileDownloadResult = downloadFileUseCase.downloadFile(path);
 
         return ResponseEntity.ok()

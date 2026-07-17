@@ -5,6 +5,7 @@ import io.github.adam035.networkdrive.application.usecase.CreateDirectoryUseCase
 import io.github.adam035.networkdrive.application.usecase.ReadDirectoryUseCase;
 import io.github.adam035.networkdrive.infrastructure.spring.web.dto.DirectoryCreationRequest;
 import io.github.adam035.networkdrive.domain.model.Directory;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +25,9 @@ public class DirectoryController {
         return createDirectoryUseCase.createDirectory(directoryCreationRequest.path());
     }
 
-    @GetMapping("/{path}")
-    public ReadDirectoryResult readDirectory(@PathVariable String path) {
+    @GetMapping("/**")
+    public ReadDirectoryResult readDirectory(HttpServletRequest request) {
+        String path = request.getRequestURI().replace("/directories", "");
         return readDirectoryUseCase.readDirectory(path);
     }
 
