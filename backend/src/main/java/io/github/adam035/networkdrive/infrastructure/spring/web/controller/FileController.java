@@ -2,15 +2,11 @@ package io.github.adam035.networkdrive.infrastructure.spring.web.controller;
 
 import io.github.adam035.networkdrive.application.usecase.DownloadFileUseCase;
 import io.github.adam035.networkdrive.application.usecase.UploadFileUseCase;
-import io.github.adam035.networkdrive.application.dto.FileDownloadResult;
 import io.github.adam035.networkdrive.infrastructure.spring.web.dto.FileUploadRequest;
 import io.github.adam035.networkdrive.domain.model.File;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,16 +25,13 @@ public class FileController {
     }
 
     @GetMapping("/**")
-    public ResponseEntity<InputStreamResource> downloadFile(HttpServletRequest request) {
+    public byte[] downloadFile(
+            @RequestParam(required = false) Long offset,
+            @RequestParam(required = false) Long length,
+            HttpServletRequest request
+    ) {
         String path = request.getRequestURI().replace("/files", "");
-        FileDownloadResult fileDownloadResult = downloadFileUseCase.downloadFile(path);
-
-        return ResponseEntity.ok()
-                .contentLength(fileDownloadResult.file().getSize())
-                .contentType(MediaType.parseMediaType(fileDownloadResult.file().getMimeType()))
-                .header("X-File-Created-At", fileDownloadResult.file().getCreatedAt().toString())
-                .header("X-File-Updated-At", fileDownloadResult.file().getUpdatedAt().toString())
-                .body(new InputStreamResource(fileDownloadResult.fileContent()));
+        return downloadFileUseCase.downloadFile(path, offset, length);
     }
 
 }

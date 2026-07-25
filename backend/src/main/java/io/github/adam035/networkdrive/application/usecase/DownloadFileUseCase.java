@@ -1,6 +1,5 @@
 package io.github.adam035.networkdrive.application.usecase;
 
-import io.github.adam035.networkdrive.application.dto.FileDownloadResult;
 import io.github.adam035.networkdrive.application.exception.UnauthorizedException;
 import io.github.adam035.networkdrive.application.port.AuthUserExtractorPort;
 import io.github.adam035.networkdrive.application.port.StoragePort;
@@ -27,7 +26,7 @@ public class DownloadFileUseCase {
 
     private final StoragePort storagePort;
 
-    public FileDownloadResult downloadFile(String path) {
+    public byte[] downloadFile(String path, Long offset, Long length) {
         User user = authUserExtractorPort.extractUser()
                 .orElseThrow(UserDoesNotExist::new);
 
@@ -38,9 +37,10 @@ public class DownloadFileUseCase {
             throw new UnauthorizedException();
         }
 
-        InputStream fileContent = storagePort.downloadFile(file.getStorageKey());
+        offset = offset != null ? offset : 0;
+        length = length != null ? length : file.getSize() - offset;
 
-        return new FileDownloadResult(file, fileContent);
+        return storagePort.downloadFile(file.getStorageKey(), offset, length);
     }
 
 }

@@ -43,16 +43,22 @@ public class MinioStorageAdapter implements StoragePort {
     }
 
     @Override
-    public InputStream downloadFile(String storageKey) {
+    public byte[] downloadFile(String storageKey, Long offset, Long length) {
         try {
              InputStream fileContent = minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(bucket)
                             .object(storageKey)
+                            .offset(offset)
+                            .length(length)
                             .build()
             );
-            log.info("File with storage key {} downloaded successfully from MinIO", storageKey);
-            return fileContent;
+            log.info(
+                    "Successfully downloaded file with storage key {} (offset={}, length={})",
+                    storageKey, offset, length
+            );
+
+            return fileContent.readAllBytes();
         } catch (Exception e) {
             log.error(e.getMessage());
             return null;
