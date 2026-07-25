@@ -9,7 +9,7 @@ public interface StoragePort {
 
     void uploadFile(File file, InputStream inputStream);
 
-    InputStream downloadFile(String storageKey);
+    byte[] downloadFile(String storageKey, Long offset, Long length);
 
     void deleteFile(String storageKey);
 
