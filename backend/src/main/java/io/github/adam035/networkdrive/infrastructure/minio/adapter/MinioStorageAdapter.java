@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 
@@ -22,13 +23,13 @@ public class MinioStorageAdapter implements StoragePort {
     private final String bucket;
 
     @Override
-    public void uploadFile(File file, InputStream inputStream) {
+    public void uploadFile(File file, byte[] bytes) {
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucket)
                             .object(file.getStorageKey())
-                            .stream(inputStream, file.getSize(), -1)
+                            .stream(new ByteArrayInputStream(bytes), bytes.length, -1)
                             .contentType(file.getMimeType())
                             .build()
             );

@@ -2,7 +2,7 @@ package io.github.adam035.networkdrive.infrastructure.spring.web.controller;
 
 import io.github.adam035.networkdrive.application.usecase.DownloadFileUseCase;
 import io.github.adam035.networkdrive.application.usecase.UploadFileUseCase;
-import io.github.adam035.networkdrive.infrastructure.spring.web.dto.FileUploadRequest;
+import io.github.adam035.networkdrive.application.dto.FileUploadCommand;
 import io.github.adam035.networkdrive.domain.model.File;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +20,8 @@ public class FileController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public File uploadFile(@ModelAttribute FileUploadRequest fileUploadRequest) {
-        return uploadFileUseCase.uploadFile(fileUploadRequest.multipartFile(), fileUploadRequest.path());
+    public File uploadFile(@RequestBody FileUploadCommand fileUploadCommand) {
+        return uploadFileUseCase.uploadFile(fileUploadCommand);
     }
 
     @GetMapping("/**")

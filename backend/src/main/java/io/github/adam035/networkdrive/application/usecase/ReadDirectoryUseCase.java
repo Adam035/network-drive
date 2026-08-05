@@ -30,7 +30,7 @@ public class ReadDirectoryUseCase {
 
     public ReadDirectoryResult readDirectory(String path) {
         Directory directory = directoryRepository.findByPath(path)
-                .orElseThrow(StorageResourceNotFoundException::new);
+                .orElseThrow(() -> new StorageResourceNotFoundException(path));
 
         User user = authUserExtractorPort.extractUser()
                 .orElseThrow(UserDoesNotExist::new);

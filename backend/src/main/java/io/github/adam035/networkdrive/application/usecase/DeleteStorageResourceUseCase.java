@@ -40,7 +40,7 @@ public class DeleteStorageResourceUseCase {
     @Transactional
     public void deleteStorageResource(String path) {
         StorageResource storageResource = storageResourceRepository.findByPath(String.format("/%s", path))
-                .orElseThrow(StorageResourceNotFoundException::new);
+                .orElseThrow(() -> new StorageResourceNotFoundException(path));
 
         User user = authUserExtractorPort.extractUser()
                 .orElseThrow(UserDoesNotExist::new);
