@@ -1,22 +1,28 @@
 package io.github.adam035.networkdrive.application.mapper;
 
+import io.github.adam035.networkdrive.application.dto.FileUploadCommand;
 import io.github.adam035.networkdrive.domain.model.User;
 import io.github.adam035.networkdrive.domain.model.File;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.springframework.web.multipart.MultipartFile;
+import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring")
 public interface FileUploadMapper {
 
-    @Mapping(target = "name", expression = "java(multipartFile.getOriginalFilename())")
-    @Mapping(target = "mimeType", expression = "java(multipartFile.getContentType())")
-    @Mapping(target = "size", expression = "java(multipartFile.getSize())")
-    @Mapping(target = "path", source = "path")
+    @Mapping(target = "name", source = "fileUploadCommand.path", qualifiedByName = "pathToName")
+    @Mapping(target = "mimeType", source = "fileUploadCommand.mimeType")
+    @Mapping(target = "size", expression = "java((long) fileUploadCommand.bytes().length)")
+    @Mapping(target = "path", source = "fileUploadCommand.path")
     @Mapping(target = "parentId", ignore = true)
     @Mapping(target = "owner", source = "owner")
     @Mapping(target = "storageKey", expression = "java(java.util.UUID.randomUUID().toString())")
     @Mapping(target = "type", expression = "java(io.github.adam035.networkdrive.domain.model.StorageResource.Type.FILE)")
-    File mapToModel(MultipartFile multipartFile, String path, User owner);
+    File mapToModel(FileUploadCommand fileUploadCommand, User owner);
+
+    @Named("pathToName")
+    default String pathToName(String path) {
+        return path.substring(path.lastIndexOf("/") + 1);
+    }
 
 }

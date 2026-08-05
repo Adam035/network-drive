@@ -31,7 +31,7 @@ public class DownloadFileUseCase {
                 .orElseThrow(UserDoesNotExist::new);
 
         File file = fileRepository.findByPath(path)
-                .orElseThrow(StorageResourceNotFoundException::new);
+                .orElseThrow(() -> new StorageResourceNotFoundException(path));
 
         if (!storageResourceAccessService.canAccess(file, user)) {
             throw new UnauthorizedException();

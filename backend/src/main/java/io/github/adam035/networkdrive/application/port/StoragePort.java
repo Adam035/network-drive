@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface StoragePort {
 
-    void uploadFile(File file, InputStream inputStream);
+    void uploadFile(File file, byte[] bytes);
 
     byte[] downloadFile(String storageKey, Long offset, Long length);
 
