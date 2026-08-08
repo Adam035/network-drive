@@ -8,6 +8,8 @@ import java.util.Optional;
 
 public interface StorageResourceRepository {
 
+    StorageResource save(StorageResource storageResource);
+
     List<StorageResource> findAllById(List<String> ids);
 
     List<StorageResource> findAllByParent(Directory parent);

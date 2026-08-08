@@ -39,7 +39,7 @@ public class DeleteStorageResourceUseCase {
 
     @Transactional
     public void deleteStorageResource(String path) {
-        StorageResource storageResource = storageResourceRepository.findByPath(String.format("/%s", path))
+        StorageResource storageResource = storageResourceRepository.findByPath(path)
                 .orElseThrow(() -> new StorageResourceNotFoundException(path));
 
         User user = authUserExtractorPort.extractUser()
@@ -67,7 +67,7 @@ public class DeleteStorageResourceUseCase {
                 .toList();
 
         List<String> ids = files.stream()
-                .map(File::getStorageKey)
+                .map(File::getId)
                 .toList();
 
         storagePort.deleteFiles(storageKeys);

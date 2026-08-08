@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/directories")
@@ -28,7 +31,8 @@ public class DirectoryController {
     @GetMapping("/**")
     public ReadDirectoryResult readDirectory(HttpServletRequest request) {
         String path = request.getRequestURI().replace("/directories", "");
-        return readDirectoryUseCase.readDirectory(path);
+        String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        return readDirectoryUseCase.readDirectory(decodedPath);
     }
 
 }

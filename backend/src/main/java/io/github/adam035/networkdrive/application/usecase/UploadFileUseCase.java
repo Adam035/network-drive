@@ -55,8 +55,11 @@ public class UploadFileUseCase {
     }
 
     private File getFile(FileUploadCommand fileUploadCommand, Directory directory, User user) {
-        System.out.println(fileUploadCommand.path());
         return fileRepository.findByPath(fileUploadCommand.path())
+                .map(file -> {
+                    file.setSize((long) fileUploadCommand.bytes().length);
+                    return file;
+                })
                 .orElseGet(() -> {
                     File mappedFile = fileUploadMapper.mapToModel(fileUploadCommand, user);
 
