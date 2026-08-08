@@ -10,9 +10,8 @@ import io.github.adam035.networkdrive.domain.model.User;
 import io.github.adam035.networkdrive.domain.repository.FileRepository;
 import io.github.adam035.networkdrive.domain.service.StorageResourceAccessService;
 import lombok.RequiredArgsConstructor;
+import org.bouncycastle.util.Arrays;
 import org.springframework.stereotype.Component;
-
-import java.io.InputStream;
 
 @Component
 @RequiredArgsConstructor
@@ -40,7 +39,9 @@ public class DownloadFileUseCase {
         offset = offset != null ? offset : 0;
         length = length != null ? length : file.getSize() - offset;
 
-        return storagePort.downloadFile(file.getStorageKey(), offset, length);
+        byte[] bytes = storagePort.downloadFile(file.getStorageKey(), offset, length);
+
+        return Arrays.copyOf(bytes, (int) Math.min(length, file.getSize()));
     }
 
 }

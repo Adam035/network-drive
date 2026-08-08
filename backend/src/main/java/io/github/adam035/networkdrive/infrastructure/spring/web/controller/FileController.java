@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/files")
@@ -31,7 +34,8 @@ public class FileController {
             HttpServletRequest request
     ) {
         String path = request.getRequestURI().replace("/files", "");
-        return downloadFileUseCase.downloadFile(path, offset, length);
+        String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        return downloadFileUseCase.downloadFile(decodedPath, offset, length);
     }
 
 }

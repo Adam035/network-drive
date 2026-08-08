@@ -3,6 +3,7 @@ package io.github.adam035.networkdrive.infrastructure.persistence.repository;
 import io.github.adam035.networkdrive.domain.model.Directory;
 import io.github.adam035.networkdrive.domain.model.StorageResource;
 import io.github.adam035.networkdrive.domain.repository.StorageResourceRepository;
+import io.github.adam035.networkdrive.infrastructure.persistence.entity.StorageResourceEntity;
 import io.github.adam035.networkdrive.infrastructure.persistence.mapper.StorageResourceMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,12 @@ class StorageResourceDbRepository implements StorageResourceRepository {
     private StorageResourceJpaRepository storageResourceJpaRepository;
 
     private StorageResourceMapper storageResourceMapper;
+
+    @Override
+    public StorageResource save(StorageResource storageResource) {
+        StorageResourceEntity storageResourceEntity = storageResourceJpaRepository.save(storageResourceMapper.mapToEntity(storageResource));
+        return storageResourceMapper.mapToModel(storageResourceEntity);
+    }
 
     @Override
     public List<StorageResource> findAllById(List<String> ids) {

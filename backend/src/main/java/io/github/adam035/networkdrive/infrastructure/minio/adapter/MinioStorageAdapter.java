@@ -34,8 +34,9 @@ public class MinioStorageAdapter implements StoragePort {
                             .build()
             );
             log.info(
-                    "File {} uploaded successfully to MinIO with storage key {}",
+                    "File {} ({} B) uploaded successfully to MinIO with storage key {}",
                     file.getName(),
+                    bytes.length,
                     file.getStorageKey()
             );
         } catch (Exception e) {
