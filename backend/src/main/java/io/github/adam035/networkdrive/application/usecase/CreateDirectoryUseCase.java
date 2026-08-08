@@ -29,7 +29,7 @@ public class CreateDirectoryUseCase {
                 .orElseThrow(UserDoesNotExist::new);
 
         Directory parentDirectory = directoryService.findParentDirectoryByPath(path)
-                .orElseThrow(StorageResourceNotFoundException::new);
+                .orElseThrow(() -> new StorageResourceNotFoundException(path));
 
         if (!storageResourceAccessService.canAccess(parentDirectory, user)) {
             throw new UnauthorizedException();

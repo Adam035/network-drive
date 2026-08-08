@@ -1,6 +1,6 @@
 package io.github.adam035.networkdrive.application.usecase;
 
-import io.github.adam035.networkdrive.application.exception.FileUploadException;
+import io.github.adam035.networkdrive.application.dto.FileUploadCommand;
 import io.github.adam035.networkdrive.application.exception.UnauthorizedException;
 import io.github.adam035.networkdrive.application.mapper.FileUploadMapper;
 import io.github.adam035.networkdrive.application.port.AuthUserExtractorPort;
@@ -17,9 +17,6 @@ import io.github.adam035.networkdrive.domain.service.StorageResourceAccessServic
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
@@ -40,9 +37,9 @@ public class UploadFileUseCase {
     private final StoragePort storagePort;
 
     @Transactional
-    public File uploadFile(MultipartFile multipartFile, String path) {
-        Directory parentDirectory = directoryService.findParentDirectoryByPath(path)
-                .orElseThrow(StorageResourceNotFoundException::new);
+    public File uploadFile(FileUploadCommand fileUploadCommand) {
+        Directory parentDirectory = directoryService.findParentDirectoryByPath(fileUploadCommand.path())
+                .orElseThrow(() -> new StorageResourceNotFoundException(fileUploadCommand.path()));
 
         User user = authUserExtractorPort.extractUser()
                 .orElseThrow(UserDoesNotExist::new);
@@ -51,18 +48,26 @@ public class UploadFileUseCase {
             throw new UnauthorizedException();
         }
 
-        File file = fileUploadMapper.mapToModel(multipartFile, path, user);
-
-        try {
-            storagePort.uploadFile(file, multipartFile.getInputStream());
-        } catch (IOException e) {
-            throw new FileUploadException();
-        }
-
-        directoryService.addStorageResource(parentDirectory, file);
-        directoryRepository.save(parentDirectory);
+        File file = getFile(fileUploadCommand, parentDirectory, user);
+        storagePort.uploadFile(file, fileUploadCommand.bytes());
 
         return fileRepository.save(file);
+    }
+
+    private File getFile(FileUploadCommand fileUploadCommand, Directory directory, User user) {
+        return fileRepository.findByPath(fileUploadCommand.path())
+                .map(file -> {
+                    file.setSize((long) fileUploadCommand.bytes().length);
+                    return file;
+                })
+                .orElseGet(() -> {
+                    File mappedFile = fileUploadMapper.mapToModel(fileUploadCommand, user);
+
+                    directoryService.addStorageResource(directory, mappedFile);
+                    directoryRepository.save(directory);
+
+                    return mappedFile;
+                });
     }
 
 }

@@ -26,7 +26,7 @@ public class GetStorageResourceUseCase {
                 .orElseThrow(UserDoesNotExist::new);
 
         StorageResource storageResource = storageResourceRepository.findByPath(path)
-                .orElseThrow(StorageResourceNotFoundException::new);
+                .orElseThrow(() -> new StorageResourceNotFoundException(path));
 
         if (!storageResourceAccessService.canAccess(storageResource, user)) {
             throw new UnauthorizedException();

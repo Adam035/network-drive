@@ -2,12 +2,15 @@ package io.github.adam035.networkdrive.infrastructure.spring.web.controller;
 
 import io.github.adam035.networkdrive.application.usecase.DownloadFileUseCase;
 import io.github.adam035.networkdrive.application.usecase.UploadFileUseCase;
-import io.github.adam035.networkdrive.infrastructure.spring.web.dto.FileUploadRequest;
+import io.github.adam035.networkdrive.application.dto.FileUploadCommand;
 import io.github.adam035.networkdrive.domain.model.File;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,8 +23,8 @@ public class FileController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public File uploadFile(@ModelAttribute FileUploadRequest fileUploadRequest) {
-        return uploadFileUseCase.uploadFile(fileUploadRequest.multipartFile(), fileUploadRequest.path());
+    public File uploadFile(@RequestBody FileUploadCommand fileUploadCommand) {
+        return uploadFileUseCase.uploadFile(fileUploadCommand);
     }
 
     @GetMapping("/**")
@@ -31,7 +34,8 @@ public class FileController {
             HttpServletRequest request
     ) {
         String path = request.getRequestURI().replace("/files", "");
-        return downloadFileUseCase.downloadFile(path, offset, length);
+        String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        return downloadFileUseCase.downloadFile(decodedPath, offset, length);
     }
 
 }
