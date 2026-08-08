@@ -1,0 +1,49 @@
+package io.github.adam035.networkdrive.domain.service;
+
+import io.github.adam035.networkdrive.domain.model.Directory;
+import io.github.adam035.networkdrive.domain.model.StorageResource;
+import io.github.adam035.networkdrive.domain.model.User;
+import io.github.adam035.networkdrive.domain.repository.DirectoryRepository;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+@Slf4j
+@Service
+@AllArgsConstructor
+public class DirectoryService {
+
+    private final DirectoryRepository directoryRepository;
+
+    public Directory createDirectory(String path, Directory parentDirectory, User owner) {
+        String name = path.substring(path.lastIndexOf('/') + 1);
+
+        Directory directory = new Directory();
+        directory.setName(name);
+        directory.setPath(path);
+        directory.setSize(0L);
+        directory.setParentId(parentDirectory != null ? parentDirectory.getId() : null);
+        directory.setOwner(owner);
+
+        return directory;
+    }
+
+    public Optional<Directory> findParentDirectoryByPath(String path) {
+        String parentDirectoryPath = path.substring(0, path.lastIndexOf('/'));
+        return directoryRepository.findByPath(parentDirectoryPath);
+    }
+
+    public void addStorageResource(Directory directory, StorageResource storageResource) {
+        directoryRepository.findById(directory.getParentId())
+                .ifPresent(parent -> {
+                    parent.setSize(parent.getSize() + storageResource.getSize());
+                    directoryRepository.save(parent);
+                });
+
+        directory.setSize(directory.getSize() + storageResource.getSize());
+        storageResource.setParentId(directory.getId());
+    }
+
+}

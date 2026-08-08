@@ -10,18 +10,14 @@ public class NetworkDrivePathAdapter implements PathPort {
     public String normalizePath(String path) {
         String username = "user1";
 
-        if (path.equals("\\")) {
-            return "/user1";
-        }
-
         String normalizedPath = path.replace("\\", "/");
 
         if (!normalizedPath.startsWith("/")) {
-            normalizedPath = "/" + normalizedPath;
+            normalizedPath = "/".concat(normalizedPath);
         }
 
-        if (!normalizedPath.startsWith("/user1")) {
-            normalizedPath = "/user1" + normalizedPath;
+        if (!normalizedPath.startsWith("/".concat(username))) {
+            normalizedPath = "/".concat(username).concat(normalizedPath);
         }
 
         if (normalizedPath.endsWith("/")) {

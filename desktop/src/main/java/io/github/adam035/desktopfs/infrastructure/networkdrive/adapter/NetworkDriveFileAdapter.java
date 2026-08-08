@@ -34,9 +34,10 @@ public class NetworkDriveFileAdapter implements FilePort {
     @Override
     public void uploadFile(String path, byte[] bytes, String mimeType) {
         networkDriveClient.post()
-                .uri("/files".concat(path))
+                .uri("/files")
                 .body(new FileUploadRequest(path, bytes, mimeType))
-                .retrieve();
+                .retrieve()
+                .toBodilessEntity();
     }
 
 }

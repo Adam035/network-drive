@@ -24,7 +24,6 @@ public class WinFspStarter {
         try {
             ServiceRunner.mountLocalDriveAsService("NetworkDriveTest01", winFspFileSystem, MOUNT_PATH, winFspMountOptions);
         } catch (ServiceException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

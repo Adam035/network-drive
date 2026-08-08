@@ -15,11 +15,6 @@ public class GetStorageResourceUseCase {
     private final PathPort pathPort;
 
     public StorageResource getStorageResource(String path) {
-        System.out.println();
-        System.out.println(path);
-        System.out.println(pathPort.normalizePath(path));
-        System.out.println();
-
         return storageResourcePort.getStorageResource(pathPort.normalizePath(path));
     }
 

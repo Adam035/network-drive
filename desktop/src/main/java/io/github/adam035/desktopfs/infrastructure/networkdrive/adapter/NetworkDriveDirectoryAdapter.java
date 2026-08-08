@@ -25,8 +25,6 @@ public class NetworkDriveDirectoryAdapter implements DirectoryPort {
 
     @Override
     public ReadDirectoryResult readDirectory(String path) {
-        System.out.println("readdirecotry");
-        System.out.println(path);
         return networkDriveClient.get()
                 .uri("/directories".concat(path))
                 .retrieve()

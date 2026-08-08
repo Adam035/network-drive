@@ -4,10 +4,12 @@ import com.github.jnrwinfspteam.jnrwinfsp.api.NTStatusException;
 import org.springframework.stereotype.Component;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -21,7 +23,9 @@ public class RandomAccessService {
 
     private void createTempFile(String path) throws NTStatusException {
         try {
-            RandomAccessFile randomAccessFile = new RandomAccessFile(Files.createTempFile("test-", ".tmp").toFile(), "rw");
+            String prefix = UUID.randomUUID().toString();
+            File tempFile = Files.createTempFile(prefix, ".tmp").toFile();
+            RandomAccessFile randomAccessFile = new RandomAccessFile(tempFile, "rw");
             randomAccessFiles.put(path, randomAccessFile);
         } catch (IOException e) {
             throw new NTStatusException(0xC0000185); // STATUS_IO_DEVICE_ERROR
@@ -29,8 +33,6 @@ public class RandomAccessService {
     }
 
     public void getTempFile(String path) throws NTStatusException {
-        if (!path.equals("\\directory1\\directory2\\test.txt")) return;
-
         System.out.println("Creating temporary file for path: " + path);
 
         if (!randomAccessFiles.containsKey(path)) {
@@ -39,6 +41,11 @@ public class RandomAccessService {
     }
 
     public void write(String path, byte[] bytes, long offset) throws NTStatusException {
+        if (!randomAccessFiles.containsKey(path)) {
+            System.out.println("Temporary file " + path + " does not exist");
+            return;
+        }
+
         System.out.println("Writing " + bytes.length + " bytes to file: " + path + " at offset: " + offset);
         try {
             RandomAccessFile randomAccessFile = randomAccessFiles.get(path);
@@ -81,15 +88,19 @@ public class RandomAccessService {
         }
     }
 
-    public void close(String path) {
+    public void close(String path) throws NTStatusException {
+        if (!randomAccessFiles.containsKey(path)) {
+            System.out.println("Temporary file " + path + " does not exist");
+            return;
+        }
+
         try {
-            if (randomAccessFiles.get(path) != null) {
+            if (randomAccessFiles.containsKey(path)) {
                 System.out.println("Closing file: " + path);
                 randomAccessFiles.remove(path).close();
             }
         } catch (IOException e) {
-//            throw new NTStatusException(0xC0000185); // STATUS_IO_DEVICE_ERROR
-            throw new RuntimeException(e);
+            throw new NTStatusException(0xC0000185); // STATUS_IO_DEVICE_ERROR
         }
     }
 
