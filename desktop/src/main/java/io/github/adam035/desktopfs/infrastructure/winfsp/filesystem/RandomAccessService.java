@@ -33,8 +33,6 @@ public class RandomAccessService {
     }
 
     public void getTempFile(String path) throws NTStatusException {
-        System.out.println("Creating temporary file for path: " + path);
-
         if (!randomAccessFiles.containsKey(path)) {
             createTempFile(path);
         }
@@ -42,11 +40,9 @@ public class RandomAccessService {
 
     public void write(String path, byte[] bytes, long offset) throws NTStatusException {
         if (!randomAccessFiles.containsKey(path)) {
-            System.out.println("Temporary file " + path + " does not exist");
             return;
         }
 
-        System.out.println("Writing " + bytes.length + " bytes to file: " + path + " at offset: " + offset);
         try {
             RandomAccessFile randomAccessFile = randomAccessFiles.get(path);
             randomAccessFile.seek(offset);
@@ -57,7 +53,6 @@ public class RandomAccessService {
     }
 
     public byte[] read(String path, long offset, int length) throws NTStatusException {
-        System.out.println("Reading " + length + " bytes from file: " + path + " at offset: " + offset);
         byte[] bytes = new byte[length];
 
         try {
@@ -75,7 +70,6 @@ public class RandomAccessService {
 
     public byte[] readAll(String path) {
         try {
-            System.out.println("Reading all bytes from file: " + path);
             RandomAccessFile randomAccessFile = randomAccessFiles.get(path);
             byte[] bytes = new byte[(int) randomAccessFile.length()];
 
@@ -90,13 +84,11 @@ public class RandomAccessService {
 
     public void close(String path) throws NTStatusException {
         if (!randomAccessFiles.containsKey(path)) {
-            System.out.println("Temporary file " + path + " does not exist");
             return;
         }
 
         try {
             if (randomAccessFiles.containsKey(path)) {
-                System.out.println("Closing file: " + path);
                 randomAccessFiles.remove(path).close();
             }
         } catch (IOException e) {

@@ -1,9 +1,7 @@
 package io.github.adam035.desktopfs.infrastructure.winfsp.filesystem;
 
 import com.github.jnrwinfspteam.jnrwinfsp.api.*;
-import io.github.adam035.desktopfs.application.dto.EditStorageResourceCommand;
 import io.github.adam035.desktopfs.application.usecase.*;
-import io.github.adam035.desktopfs.domain.model.StorageResource;
 import io.github.adam035.desktopfs.infrastructure.winfsp.mapper.FileInfoMapper;
 import jnr.ffi.Pointer;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +45,7 @@ public class WinFspFileSystem extends WinFspStubFS {
 
     private final GetStorageResourceUseCase getStorageResourceUseCase;
 
-    private final EditStorageResourceUseCase editStorageResourceUseCase;
+    private final MoveStorageResourceUseCase moveStorageResourceUseCase;
 
     private final DeleteStorageResourceUseCase deleteStorageResourceUseCase;
 
@@ -72,9 +70,9 @@ public class WinFspFileSystem extends WinFspStubFS {
             UploadFileUseCase uploadFileUseCase,
             FileInfoMapper fileInfoMapper,
             GetStorageResourceUseCase getStorageResourceUseCase,
-            EditStorageResourceUseCase editStorageResourceUseCase,
-            DeleteStorageResourceUseCase deleteStorageResourceUseCase
-    ) throws NTStatusException {
+            DeleteStorageResourceUseCase deleteStorageResourceUseCase,
+            MoveStorageResourceUseCase moveStorageResourceUseCase
+    ) {
         this.randomAccessService = randomAccessService;
         this.readDirectoryUseCase = readDirectoryUseCase;
         this.createDirectoryUseCase = createDirectoryUseCase;
@@ -82,8 +80,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         this.uploadFileUseCase = uploadFileUseCase;
         this.fileInfoMapper = fileInfoMapper;
         this.getStorageResourceUseCase = getStorageResourceUseCase;
-        this.editStorageResourceUseCase = editStorageResourceUseCase;
         this.deleteStorageResourceUseCase = deleteStorageResourceUseCase;
+        this.moveStorageResourceUseCase = moveStorageResourceUseCase;
 
         fileHandle = new AtomicLong(0);
         cacheLock = new Object();
@@ -126,21 +124,22 @@ public class WinFspFileSystem extends WinFspStubFS {
 
         synchronized (cacheLock) {
             if (UNSUPPORTED_FILE_NAMES.stream().anyMatch(fileName.toLowerCase()::contains)) {
-                SecurityResult securityResult = new SecurityResult(ROOT_SECURITY_DESCRIPTOR.getBytes(), Set.of(FileAttributes.FILE_ATTRIBUTE_NORMAL));
-                return Optional.of(securityResult);
+                return Optional.of(
+                        new SecurityResult(
+                                SecurityDescriptorHandler.securityDescriptorToBytes(ROOT_SECURITY_DESCRIPTOR),
+                                Set.of(FileAttributes.FILE_ATTRIBUTE_NORMAL)
+                        )
+                );
             }
 
             FileInfo fileInfo = getFileInfoByPath(fileName);
 
-            Set<FileAttributes> fileAttributes = fileInfo != null
-                    ? fileInfo.getFileAttributes()
-                    : Set.of(FileAttributes.FILE_ATTRIBUTE_NORMAL);
+            byte[] securityDescriptor = securityDescriptors.getOrDefault(
+                    fileName,
+                    SecurityDescriptorHandler.securityDescriptorToBytes(ROOT_SECURITY_DESCRIPTOR)
+            );
 
-            byte[] securityDescriptor = securityDescriptors.containsKey(fileName)
-                    ? securityDescriptors.get(fileName)
-                    : SecurityDescriptorHandler.securityDescriptorToBytes(ROOT_SECURITY_DESCRIPTOR);
-
-            return Optional.of(new SecurityResult(securityDescriptor, fileAttributes));
+            return Optional.of(new SecurityResult(securityDescriptor, fileInfo.getFileAttributes()));
         }
     }
 
@@ -324,16 +323,12 @@ public class WinFspFileSystem extends WinFspStubFS {
         );
 
         synchronized (cacheLock) {
-            EditStorageResourceCommand editStorageResourceCommand = EditStorageResourceCommand.builder()
-                    .path(newFileName)
-                    .build();
-
-            String path = getPathByHandle(ctx.getFileHandle());
-            editStorageResourceUseCase.editStorageResource(path, editStorageResourceCommand);
+            moveStorageResourceUseCase.moveStorageResource(oldFileName, newFileName, replaceIfExists);
 
             FileInfo fileInfo = getFileInfo(ctx);
             fileInfo.setNormalizedName(newFileName);
-            filesByPath.remove(path);
+
+            filesByPath.remove(getPathByHandle(ctx.getFileHandle()));
             filesByPath.put(newFileName, fileInfo);
 
             long handle = ctx.getFileHandle();
@@ -396,19 +391,19 @@ public class WinFspFileSystem extends WinFspStubFS {
     }
 
     @Override
-    public byte[] getReparsePointData(OpenContext ctx) throws NTStatusException {
+    public byte[] getReparsePointData(OpenContext ctx) {
         log.info("GET REPARSE POINT DATA - ctx={}", ctx);
 
         return new byte[0];
     }
 
     @Override
-    public void setReparsePoint(OpenContext ctx, byte[] reparseData, int reparseTag) throws NTStatusException {
+    public void setReparsePoint(OpenContext ctx, byte[] reparseData, int reparseTag) {
         log.info("SET REPARSE POINT - ctx={}, reparseData={}, reparseTag={}", ctx, reparseData, reparseTag);
     }
 
     @Override
-    public void deleteReparsePoint(OpenContext ctx) throws NTStatusException {
+    public void deleteReparsePoint(OpenContext ctx) {
         log.info("DELETE REPARSE POINT - ctx={}", ctx);
     }
 
@@ -425,20 +420,20 @@ public class WinFspFileSystem extends WinFspStubFS {
             return new FileInfo(path);
         }
 
-        if (filesByPath.containsKey(path)) {
-            return filesByPath.get(path);
+        FileInfo cachedFileInfo = filesByPath.get(path);
+
+        if (cachedFileInfo != null) {
+            return cachedFileInfo;
         }
 
-        StorageResource storageResource = getStorageResourceUseCase.getStorageResource(path);
+        return getStorageResourceUseCase.getStorageResource(path)
+                .map(storageResource -> {
+                    FileInfo fileInfo = fileInfoMapper.toFileInfo(storageResource);
+                    filesByPath.put(path, fileInfo);
 
-        if (storageResource == null) {
-            throw new NTStatusException(0xC0000034); // STATUS_OBJECT_NAME_NOT_FOUND
-        }
-
-        FileInfo fileInfo = fileInfoMapper.toFileInfo(storageResource);
-        filesByPath.put(path, fileInfo);
-
-        return fileInfo;
+                    return fileInfo;
+                })
+                .orElseThrow(() -> new NTStatusException(0xC0000034)); // STATUS_OBJECT_NAME_NOT_FOUND
     }
 
     private OpenResult  createOpenResult(String path, FileInfo fileInfo) {

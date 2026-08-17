@@ -18,7 +18,6 @@ public class NetworkDriveConfiguration {
     public RestClient networkDriveClient(JsonMapper mapper) {
         return RestClient.builder()
                 .baseUrl(baseUrl)
-                .defaultHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwic3ViIjoiYjkyNjljOTctNTIyMC00MDIwLThhN2YtMDgxNGI2ZDZkMDhlIiwiaWF0IjoxNzg0MzM2Mzc4LCJleHAiOjE3ODQzMzY2Nzh9.OouhvXd92QbjisMJlwW6TG6bHuq5uXVYJvC-Mg021nI")
                 .configureMessageConverters(converters -> {
                     converters.addCustomConverter(new JacksonJsonHttpMessageConverter(mapper));
                     converters.addCustomConverter(new ByteArrayHttpMessageConverter());

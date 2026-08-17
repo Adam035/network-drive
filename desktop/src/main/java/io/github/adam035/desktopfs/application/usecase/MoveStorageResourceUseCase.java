@@ -2,22 +2,23 @@ package io.github.adam035.desktopfs.application.usecase;
 
 import io.github.adam035.desktopfs.application.port.PathPort;
 import io.github.adam035.desktopfs.application.port.StorageResourcePort;
-import io.github.adam035.desktopfs.domain.model.StorageResource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-
 @Component
 @RequiredArgsConstructor
-public class GetStorageResourceUseCase {
+public class MoveStorageResourceUseCase {
 
     private final StorageResourcePort storageResourcePort;
 
     private final PathPort pathPort;
 
-    public Optional<StorageResource> getStorageResource(String path) {
-        return storageResourcePort.getStorageResource(pathPort.normalizePath(path));
+    public void moveStorageResource(String oldPath, String newPath, boolean replaceIfExists) {
+        storageResourcePort.moveStorageResource(
+                pathPort.normalizePath(oldPath),
+                pathPort.normalizePath(newPath),
+                replaceIfExists
+        );
     }
 
 }

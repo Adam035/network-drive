@@ -1,13 +1,14 @@
 package io.github.adam035.desktopfs.application.port;
 
-import io.github.adam035.desktopfs.application.dto.EditStorageResourceCommand;
 import io.github.adam035.desktopfs.domain.model.StorageResource;
+
+import java.util.Optional;
 
 public interface StorageResourcePort {
 
-    StorageResource getStorageResource(String path);
+    Optional<StorageResource> getStorageResource(String path);
 
-    StorageResource editStorageResource(String path, EditStorageResourceCommand editStorageResourceCommand);
+    void moveStorageResource(String oldPath, String newPath, boolean replaceIfExists);
 
     void deleteStorageResource(String path);
 
