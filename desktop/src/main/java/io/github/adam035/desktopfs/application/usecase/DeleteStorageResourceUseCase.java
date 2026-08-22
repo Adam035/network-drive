@@ -13,8 +13,8 @@ public class DeleteStorageResourceUseCase {
 
     private final PathPort pathPort;
 
-    public void deleteStorageResource(String path) {
-        storageResourcePort.deleteStorageResource(pathPort.normalizePath(path));
+    public void deleteStorageResource(String path, String volumeLabel) {
+        storageResourcePort.deleteStorageResource(pathPort.normalizePath(path, volumeLabel));
     }
 
 }

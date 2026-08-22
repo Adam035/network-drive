@@ -14,8 +14,8 @@ public class CreateDirectoryUseCase {
 
     private final PathPort pathPort;
 
-    public Directory createDirectory(String path) {
-        return directoryPort.createDirectory(pathPort.normalizePath(path));
+    public Directory createDirectory(String path, String volumeLabel) {
+        return directoryPort.createDirectory(pathPort.normalizePath(path, volumeLabel));
     }
 
 

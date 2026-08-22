@@ -13,10 +13,10 @@ public class MoveStorageResourceUseCase {
 
     private final PathPort pathPort;
 
-    public void moveStorageResource(String oldPath, String newPath, boolean replaceIfExists) {
+    public void moveStorageResource(String oldPath, String newPath, boolean replaceIfExists, String volumeLabel) {
         storageResourcePort.moveStorageResource(
-                pathPort.normalizePath(oldPath),
-                pathPort.normalizePath(newPath),
+                pathPort.normalizePath(oldPath, volumeLabel),
+                pathPort.normalizePath(newPath, volumeLabel),
                 replaceIfExists
         );
     }

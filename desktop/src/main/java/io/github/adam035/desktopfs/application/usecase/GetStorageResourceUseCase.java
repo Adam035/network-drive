@@ -16,8 +16,8 @@ public class GetStorageResourceUseCase {
 
     private final PathPort pathPort;
 
-    public Optional<StorageResource> getStorageResource(String path) {
-        return storageResourcePort.getStorageResource(pathPort.normalizePath(path));
+    public Optional<StorageResource> getStorageResource(String path, String volumeLabel) {
+        return storageResourcePort.getStorageResource(pathPort.normalizePath(path, volumeLabel));
     }
 
 }

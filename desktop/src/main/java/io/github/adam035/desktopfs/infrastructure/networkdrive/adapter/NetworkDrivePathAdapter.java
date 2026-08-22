@@ -7,17 +7,15 @@ import org.springframework.stereotype.Component;
 public class NetworkDrivePathAdapter implements PathPort {
 
     @Override
-    public String normalizePath(String path) {
-        String username = "user1";
-
+    public String normalizePath(String path, String volumeLabel) {
         String normalizedPath = path.replace("\\", "/");
 
         if (!normalizedPath.startsWith("/")) {
             normalizedPath = "/".concat(normalizedPath);
         }
 
-        if (!normalizedPath.startsWith("/".concat(username))) {
-            normalizedPath = "/".concat(username).concat(normalizedPath);
+        if (!normalizedPath.startsWith("/".concat(volumeLabel))) {
+            normalizedPath = "/".concat(volumeLabel).concat(normalizedPath);
         }
 
         if (normalizedPath.endsWith("/")) {
