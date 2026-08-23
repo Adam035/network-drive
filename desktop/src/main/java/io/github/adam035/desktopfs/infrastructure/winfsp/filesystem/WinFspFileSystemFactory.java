@@ -1,5 +1,6 @@
 package io.github.adam035.desktopfs.infrastructure.winfsp.filesystem;
 
+import io.github.adam035.desktopfs.application.port.VolumePort;
 import io.github.adam035.desktopfs.application.usecase.*;
 import io.github.adam035.desktopfs.infrastructure.winfsp.mapper.FileInfoMapper;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,7 @@ public class WinFspFileSystemFactory {
 
     private final FileInfoMapper fileInfoMapper;
 
-    private final GetVolumeUseCase getVolumeUseCase;
+    private final VolumePort volumePort;
 
     private final ReadDirectoryUseCase readDirectoryUseCase;
 
@@ -33,7 +34,7 @@ public class WinFspFileSystemFactory {
         return new WinFspFileSystem(
                 volumeLabel,
                 randomAccessService,
-                getVolumeUseCase,
+                volumePort,
                 readDirectoryUseCase,
                 createDirectoryUseCase,
                 downloadFileUseCase,

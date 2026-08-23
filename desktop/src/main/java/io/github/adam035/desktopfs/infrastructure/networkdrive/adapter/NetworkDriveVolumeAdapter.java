@@ -3,12 +3,13 @@ package io.github.adam035.desktopfs.infrastructure.networkdrive.adapter;
 import io.github.adam035.desktopfs.application.dto.VolumeResult;
 import io.github.adam035.desktopfs.application.port.VolumePort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -31,8 +32,15 @@ public class NetworkDriveVolumeAdapter implements VolumePort {
     }
 
     @Override
-    public List<String> getAvailableVolumeLabels() {
-        return List.of("user1");
+    public Set<String> getAvailableVolumeLabels() {
+        try {
+            return networkDriveClient.get()
+                    .uri("/api/volumes")
+                    .retrieve()
+                    .body(ParameterizedTypeReference.forType(Set.class));
+        } catch (HttpClientErrorException.NotFound e) {
+            return Set.of();
+        }
     }
 
 }

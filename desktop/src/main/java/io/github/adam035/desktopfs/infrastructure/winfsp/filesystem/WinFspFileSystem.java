@@ -2,6 +2,7 @@ package io.github.adam035.desktopfs.infrastructure.winfsp.filesystem;
 
 import com.github.jnrwinfspteam.jnrwinfsp.api.*;
 import io.github.adam035.desktopfs.application.dto.VolumeResult;
+import io.github.adam035.desktopfs.application.port.VolumePort;
 import io.github.adam035.desktopfs.application.usecase.*;
 import io.github.adam035.desktopfs.infrastructure.winfsp.mapper.FileInfoMapper;
 import jnr.ffi.Pointer;
@@ -55,10 +56,12 @@ public class WinFspFileSystem extends WinFspStubFS {
 
     private final Map<Long, String> pathsByHandle;
 
+    private final Set<String> dirtyPaths;
+
     public WinFspFileSystem(
             String volumeLabel,
             RandomAccessService randomAccessService,
-            GetVolumeUseCase getVolumeUseCase,
+            VolumePort volumePort,
             ReadDirectoryUseCase readDirectoryUseCase,
             CreateDirectoryUseCase createDirectoryUseCase,
             DownloadFileUseCase downloadFileUseCase,
@@ -78,7 +81,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         this.deleteStorageResourceUseCase = deleteStorageResourceUseCase;
         this.moveStorageResourceUseCase = moveStorageResourceUseCase;
 
-        volumeResult = getVolumeUseCase.getVolume(volumeLabel)
+        volumeResult = volumePort.getVolume(volumeLabel)
                 .orElseThrow(() -> new RuntimeException("Volume not found: " + volumeLabel)); // TODO
 
         fileHandle = new AtomicLong(0);
@@ -86,6 +89,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         filesByPath = new ConcurrentHashMap<>();
         securityDescriptors = new ConcurrentHashMap<>();
         pathsByHandle = new ConcurrentHashMap<>();
+        dirtyPaths = ConcurrentHashMap.newKeySet();
     }
 
     @Override
@@ -147,6 +151,9 @@ public class WinFspFileSystem extends WinFspStubFS {
                 return createOpenResult(fileName, fileInfoMapper.toFileInfo(createDirectoryUseCase.createDirectory(fileName, volumeLabel)));
             }
 
+            randomAccessService.getTempFile(fileName);
+            dirtyPaths.add(fileName);
+
             uploadFileUseCase.uploadFile(fileName, new byte[0], "application/octet-stream", volumeLabel); // TODO
 
             return createOpenResult(fileName, getFileInfoByPath(fileName));
@@ -189,6 +196,10 @@ public class WinFspFileSystem extends WinFspStubFS {
 
                 if (flags.contains(DELETE)) {
                     deleteStorageResourceUseCase.deleteStorageResource(path, volumeLabel);
+                    return;
+                }
+
+                if (!dirtyPaths.remove(path)) {
                     return;
                 }
 
@@ -242,15 +253,26 @@ public class WinFspFileSystem extends WinFspStubFS {
     public WriteResult write(OpenContext ctx, Pointer pBuffer, long offset, int length, boolean c, boolean constrainedIo) throws NTStatusException {
         log.info("WRITE - ctx={}, pBuffer={}, offset={}, length={}, c={}, constrainedIo={}", ctx, pBuffer, offset, length, c, constrainedIo);
 
-        byte[] bytes = new byte[length];
-
         synchronized (cacheLock) {
-            String path = getPathByHandle(ctx.getFileHandle());
+            String path = getPathByHandle(
+                    ctx.getFileHandle()
+            );
 
-            pBuffer.get(0, bytes, 0, bytes.length);
+            randomAccessService.getTempFile(path);
+
+            byte[] bytes = new byte[length];
+            pBuffer.get(0, bytes, 0, length);
+
             randomAccessService.write(path, bytes, offset);
+            dirtyPaths.add(path);
 
-            return new WriteResult(length, getFileInfoByPath(path));
+            FileInfo fileInfo = getFileInfoByPath(path);
+            long newSize = Math.max(fileInfo.getFileSize(), offset + length);
+
+            fileInfo.setFileSize(newSize);
+            fileInfo.setAllocationSize(newSize);
+
+            return new WriteResult(length, fileInfo);
         }
     }
 
