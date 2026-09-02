@@ -3,93 +3,69 @@ package io.github.adam035.desktopfs.infrastructure.winfsp.filesystem;
 import com.github.jnrwinfspteam.jnrwinfsp.api.*;
 import io.github.adam035.desktopfs.application.dto.VolumeResult;
 import io.github.adam035.desktopfs.application.port.VolumePort;
-import io.github.adam035.desktopfs.application.usecase.*;
-import io.github.adam035.desktopfs.infrastructure.winfsp.mapper.FileInfoMapper;
+import io.github.adam035.desktopfs.infrastructure.winfsp.registry.OpenHandleRegistry;
+import io.github.adam035.desktopfs.infrastructure.winfsp.service.*;
 import jnr.ffi.Pointer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
-
-import static com.github.jnrwinfspteam.jnrwinfsp.api.CleanupFlags.DELETE;
-import static com.github.jnrwinfspteam.jnrwinfsp.api.CreateOptions.FILE_DIRECTORY_FILE;
 
 @Slf4j
 public class WinFspFileSystem extends WinFspStubFS {
 
-    private static final String ROOT_SECURITY_DESCRIPTOR = "O:BAG:BAD:PAR(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FA;;;WD)";
-
-    private static final Set<String> UNSUPPORTED_FILE_NAMES = Set.of(
-            "\\desktop.ini",
-            "\\autorun.inf"
-    );
-
     private final VolumeResult volumeResult;
-
-    private final RandomAccessService randomAccessService;
-
-    private final ReadDirectoryUseCase readDirectoryUseCase;
-
-    private final CreateDirectoryUseCase createDirectoryUseCase;
-
-    private final DownloadFileUseCase downloadFileUseCase;
-
-    private final UploadFileUseCase uploadFileUseCase;
-
-    private final GetStorageResourceUseCase getStorageResourceUseCase;
-
-    private final MoveStorageResourceUseCase moveStorageResourceUseCase;
-
-    private final DeleteStorageResourceUseCase deleteStorageResourceUseCase;
-
-    private final FileInfoMapper fileInfoMapper;
-
-    private final AtomicLong fileHandle;
 
     private final Object cacheLock;
 
-    private final  Map<String, FileInfo> filesByPath;
+    private final OpenHandleRegistry openHandleRegistry;
 
-    private final Map<String, byte[]> securityDescriptors;
-
-    private final Map<Long, String> pathsByHandle;
-
-    private final Set<String> dirtyPaths;
+    private final CleanupService cleanupService;
+    private final CloseService closeService;
+    private final CreateService createService;
+    private final FlushService flushService;
+    private final OpenService openService;
+    private final OverwriteService overwriteService;
+    private final ReadDirectoryService readDirectoryService;
+    private final ReadService readService;
+    private final RenameService renameService;
+    private final SecurityService securityService;
+    private final WriteService writeService;
 
     public WinFspFileSystem(
             String volumeLabel,
-            RandomAccessService randomAccessService,
             VolumePort volumePort,
-            ReadDirectoryUseCase readDirectoryUseCase,
-            CreateDirectoryUseCase createDirectoryUseCase,
-            DownloadFileUseCase downloadFileUseCase,
-            UploadFileUseCase uploadFileUseCase,
-            FileInfoMapper fileInfoMapper,
-            GetStorageResourceUseCase getStorageResourceUseCase,
-            DeleteStorageResourceUseCase deleteStorageResourceUseCase,
-            MoveStorageResourceUseCase moveStorageResourceUseCase
+            OpenHandleRegistry openHandleRegistry,
+            CleanupService cleanupService,
+            CloseService closeService,
+            CreateService createService,
+            FlushService flushService,
+            OpenService openService,
+            OverwriteService overwriteService,
+            ReadDirectoryService readDirectoryService,
+            ReadService readService,
+            RenameService renameService,
+            SecurityService securityService,
+            WriteService writeService
+
     ) {
-        this.randomAccessService = randomAccessService;
-        this.readDirectoryUseCase = readDirectoryUseCase;
-        this.createDirectoryUseCase = createDirectoryUseCase;
-        this.downloadFileUseCase = downloadFileUseCase;
-        this.uploadFileUseCase = uploadFileUseCase;
-        this.fileInfoMapper = fileInfoMapper;
-        this.getStorageResourceUseCase = getStorageResourceUseCase;
-        this.deleteStorageResourceUseCase = deleteStorageResourceUseCase;
-        this.moveStorageResourceUseCase = moveStorageResourceUseCase;
+        this.openHandleRegistry = openHandleRegistry;
+        this.cleanupService = cleanupService;
+        this.closeService = closeService;
+        this.createService = createService;
+        this.flushService = flushService;
+        this.openService = openService;
+        this.overwriteService = overwriteService;
+        this.readDirectoryService = readDirectoryService;
+        this.readService = readService;
+        this.renameService = renameService;
+        this.securityService = securityService;
+        this.writeService = writeService;
 
         volumeResult = volumePort.getVolume(volumeLabel)
                 .orElseThrow(() -> new RuntimeException("Volume not found: " + volumeLabel)); // TODO
 
-        fileHandle = new AtomicLong(0);
-        cacheLock = new Object();
-        filesByPath = new ConcurrentHashMap<>();
-        securityDescriptors = new ConcurrentHashMap<>();
-        pathsByHandle = new ConcurrentHashMap<>();
-        dirtyPaths = ConcurrentHashMap.newKeySet();
+        cacheLock = openHandleRegistry;
     }
 
     @Override
@@ -113,23 +89,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("GET SECURITY BY NAME - fileName={}", fileName);
 
         synchronized (cacheLock) {
-            if (UNSUPPORTED_FILE_NAMES.stream().anyMatch(fileName.toLowerCase()::contains)) {
-                return Optional.of(
-                        new SecurityResult(
-                                SecurityDescriptorHandler.securityDescriptorToBytes(ROOT_SECURITY_DESCRIPTOR),
-                                Set.of(FileAttributes.FILE_ATTRIBUTE_NORMAL)
-                        )
-                );
-            }
 
-            FileInfo fileInfo = getFileInfoByPath(fileName);
-
-            byte[] securityDescriptor = securityDescriptors.getOrDefault(
-                    fileName,
-                    SecurityDescriptorHandler.securityDescriptorToBytes(ROOT_SECURITY_DESCRIPTOR)
-            );
-
-            return Optional.of(new SecurityResult(securityDescriptor, fileInfo.getFileAttributes()));
+            return securityService.getSecurityByName(fileName, volumeResult.volumeLabel());
         }
     }
 
@@ -141,22 +102,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         );
 
         synchronized (cacheLock) {
-            if (UNSUPPORTED_FILE_NAMES.stream().anyMatch(fileName.toLowerCase()::contains)) {
-                return new OpenResult(fileHandle.incrementAndGet(), new FileInfo(fileName));
-            }
-
-            String volumeLabel = getVolumeInfo().getVolumeLabel();
-
-            if (createOptions.contains(FILE_DIRECTORY_FILE)) {
-                return createOpenResult(fileName, fileInfoMapper.toFileInfo(createDirectoryUseCase.createDirectory(fileName, volumeLabel)));
-            }
-
-            randomAccessService.getTempFile(fileName);
-            dirtyPaths.add(fileName);
-
-            uploadFileUseCase.uploadFile(fileName, new byte[0], "application/octet-stream", volumeLabel); // TODO
-
-            return createOpenResult(fileName, getFileInfoByPath(fileName));
+            return createService.create(fileName, createOptions, openHandleRegistry.nextHandle(), volumeResult.volumeLabel(), fileAttributes, securityDescriptor, allocationSize);
         }
     }
 
@@ -165,11 +111,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("OPEN - fileName={}, createOptions={}, grantedAccess={}", fileName, createOptions, grantedAccess);
 
         synchronized (cacheLock) {
-            if (!createOptions.contains(FILE_DIRECTORY_FILE)) {
-                randomAccessService.getTempFile(fileName);
-            }
 
-            return createOpenResult(fileName, getFileInfoByPath(fileName));
+            return openService.open(openHandleRegistry.nextHandle(), fileName, createOptions, volumeResult.volumeLabel());
         }
     }
 
@@ -181,7 +124,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         );
 
         synchronized (cacheLock) {
-            return getFileInfo(ctx);
+
+            return overwriteService.overwrite(ctx, fileAttributes, replaceFileAttributes, allocationSize);
         }
     }
 
@@ -190,24 +134,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("CLEANUP - ctx={}, flags={}", ctx, flags);
 
         synchronized (cacheLock) {
-            try {
-                String volumeLabel = getVolumeInfo().getVolumeLabel();
-                String path = getPathByHandle(ctx.getFileHandle());
 
-                if (flags.contains(DELETE)) {
-                    deleteStorageResourceUseCase.deleteStorageResource(path, volumeLabel);
-                    return;
-                }
-
-                if (!dirtyPaths.remove(path)) {
-                    return;
-                }
-
-                byte[] bytes = randomAccessService.readAll(path);
-                uploadFileUseCase.uploadFile(path, bytes, "application/octet-stream", volumeLabel); // TODO
-            } catch (NTStatusException e) {
-                log.error("Failed to get path by handle: {}", ctx.getFileHandle(), e);
-            }
+            cleanupService.cleanup(ctx, flags, volumeResult.volumeLabel());
         }
     }
 
@@ -216,14 +144,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("CLOSE - ctx={}", ctx);
 
         synchronized (cacheLock) {
-            long handle = ctx.getFileHandle();
 
-            try {
-                randomAccessService.close(getPathByHandle(handle));
-                pathsByHandle.remove(handle);
-            } catch (NTStatusException e) {
-                log.error("Failed to get path by handle: {}", ctx.getFileHandle(), e);
-            }
+            closeService.close(ctx);
         }
     }
 
@@ -232,20 +154,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("READ - ctx={}, pBuffer={}, offset={}, length={}", ctx, pBuffer, offset, length);
 
         synchronized (cacheLock) {
-            String path = getPathByHandle(ctx.getFileHandle());
-            long fileSize = getFileInfo(ctx).getFileSize();
 
-            if (offset >= fileSize) {
-                return 0;
-            }
-
-            String volumeLabel = getVolumeInfo().getVolumeLabel();
-            int bytesToRead = (int) Math.min(length, fileSize - offset);
-            byte[] bytes = downloadFileUseCase.downloadFile(path, offset, bytesToRead, volumeLabel);
-            int bytesRead = Math.min(bytes.length, bytesToRead);
-            pBuffer.put(0, bytes, 0, bytesRead);
-
-            return bytesRead;
+            return readService.read(ctx, pBuffer, offset, length, volumeResult.volumeLabel());
         }
     }
 
@@ -254,25 +164,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("WRITE - ctx={}, pBuffer={}, offset={}, length={}, c={}, constrainedIo={}", ctx, pBuffer, offset, length, c, constrainedIo);
 
         synchronized (cacheLock) {
-            String path = getPathByHandle(
-                    ctx.getFileHandle()
-            );
 
-            randomAccessService.getTempFile(path);
-
-            byte[] bytes = new byte[length];
-            pBuffer.get(0, bytes, 0, length);
-
-            randomAccessService.write(path, bytes, offset);
-            dirtyPaths.add(path);
-
-            FileInfo fileInfo = getFileInfoByPath(path);
-            long newSize = Math.max(fileInfo.getFileSize(), offset + length);
-
-            fileInfo.setFileSize(newSize);
-            fileInfo.setAllocationSize(newSize);
-
-            return new WriteResult(length, fileInfo);
+            return writeService.write(ctx, pBuffer, offset, length, c, constrainedIo);
         }
     }
 
@@ -281,7 +174,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("FLUSH - ctx={}", ctx);
 
         synchronized (cacheLock) {
-            return getFileInfo(ctx);
+
+            return flushService.flush(ctx, volumeResult.volumeLabel());
         }
     }
 
@@ -290,7 +184,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("GET FILE INFO - ctx={}", ctx);
 
         synchronized (cacheLock) {
-            return getFileInfoByPath(getPathByHandle(ctx.getFileHandle()));
+            return openHandleRegistry.getFileInfoByFileHandle(ctx.getFileHandle());
         }
     }
 
@@ -308,13 +202,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("SET FILE SIZE - ctx={}, newSize={}, setAllocationSize={}", ctx, newSize, setAllocationSize);
 
         synchronized (cacheLock) {
-            FileInfo fileInfo = getFileInfo(ctx);
-
-            if (!setAllocationSize) {
-                fileInfo.setFileSize(newSize);
-            }
-
-            return fileInfo;
+            return writeService.setFileSize(ctx, newSize, setAllocationSize);
         }
     }
 
@@ -322,7 +210,9 @@ public class WinFspFileSystem extends WinFspStubFS {
     public void canDelete(OpenContext ctx) throws NTStatusException {
         log.info("CAN DELETE - ctx={}", ctx);
 
-        if (isRootDirectory(getPathByHandle(ctx.getFileHandle()))) {
+        String path = openHandleRegistry.getPathByFileHandle(ctx.getFileHandle());
+
+        if (isRootDirectory(path)) {
             throw new NTStatusException(0xC0000022); // STATUS_ACCESS_DENIED
         }
     }
@@ -335,18 +225,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         );
 
         synchronized (cacheLock) {
-            String volumeLabel = getVolumeInfo().getVolumeLabel();
-            moveStorageResourceUseCase.moveStorageResource(oldFileName, newFileName, replaceIfExists, volumeLabel);
 
-            FileInfo fileInfo = getFileInfo(ctx);
-            fileInfo.setNormalizedName(newFileName);
-
-            filesByPath.remove(getPathByHandle(ctx.getFileHandle()));
-            filesByPath.put(newFileName, fileInfo);
-
-            long handle = ctx.getFileHandle();
-            pathsByHandle.remove(handle);
-            pathsByHandle.put(handle, newFileName);
+            renameService.rename(ctx, oldFileName, newFileName, replaceIfExists, volumeResult.volumeLabel());
         }
     }
 
@@ -354,17 +234,18 @@ public class WinFspFileSystem extends WinFspStubFS {
     public byte[] getSecurity(OpenContext ctx) throws NTStatusException {
         log.info("GET SECURITY - ctx={}", ctx);
 
-        String path = getPathByHandle(ctx.getFileHandle());
-        return securityDescriptors.containsKey(path)
-                ? securityDescriptors.get(path)
-                : SecurityDescriptorHandler.securityDescriptorToBytes(ROOT_SECURITY_DESCRIPTOR);
+        synchronized (cacheLock) {
+            return securityService.getSecurity(ctx);
+        }
     }
 
     @Override
     public void setSecurity(OpenContext ctx, byte[] securityDescriptor) throws NTStatusException {
         log.info("SET SECURITY - ctx={}, securityDescriptor={}", ctx, securityDescriptor);
 
-        securityDescriptors.put(getPathByHandle(ctx.getFileHandle()), securityDescriptor);
+        synchronized (cacheLock) {
+            securityService.setSecurity(ctx, securityDescriptor);
+        }
     }
 
     @Override
@@ -372,24 +253,8 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("READ DIRECTORY - ctx={}, pattern={}, marker={}, consumer={}", ctx, pattern, marker, consumer);
 
         synchronized (cacheLock) {
-            String volumeLabel = getVolumeInfo().getVolumeLabel();
-            String directoryPath = getPathByHandle(ctx.getFileHandle());
 
-            readDirectoryUseCase.readDirectory(directoryPath, volumeLabel)
-                    .children()
-                    .stream()
-                    .map(fileInfoMapper::toFileInfo)
-//                    .filter(fileInfo -> pattern.isBlank() || fileInfo.getNormalizedName().startsWith(pattern))
-//                    .filter(fileInfo -> marker.isBlank() || fileInfo.getNormalizedName().compareTo(marker) > 0)
-                    .forEach(fileInfo -> {
-                        String path = directoryPath.concat("\\").concat(fileInfo.getFileName());
-
-                        if (!filesByPath.containsKey(path)) {
-                            filesByPath.put(path, fileInfo);
-                        }
-
-                        consumer.test(fileInfo);
-                    });
+            readDirectoryService.readDirectory(ctx, pattern, marker, consumer, volumeResult.volumeLabel());
         }
     }
 
@@ -398,9 +263,9 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("GET DIR INFO BY NAME - parentDirCtx={}, fileName={}", parentDirCtx, fileName);
 
         synchronized (cacheLock) {
-            String path = getPathByHandle(parentDirCtx.getFileHandle()).concat("\\").concat(fileName);
 
-            return getFileInfoByPath(path);
+            return readDirectoryService.getDirInfoByName(parentDirCtx, fileName);
+
         }
     }
 
@@ -419,44 +284,6 @@ public class WinFspFileSystem extends WinFspStubFS {
     @Override
     public void deleteReparsePoint(OpenContext ctx) {
         log.info("DELETE REPARSE POINT - ctx={}", ctx);
-    }
-
-    private String getPathByHandle(long handle) throws NTStatusException {
-        if (pathsByHandle.containsKey(handle)) {
-            return pathsByHandle.get(handle);
-        }
-
-        throw new NTStatusException(0xC0000034); // STATUS_OBJECT_NAME_NOT_FOUND
-    }
-
-    private FileInfo getFileInfoByPath(String path) throws NTStatusException {
-        if (UNSUPPORTED_FILE_NAMES.stream().anyMatch(path.toLowerCase()::contains)) {
-            return new FileInfo(path);
-        }
-
-        FileInfo cachedFileInfo = filesByPath.get(path);
-
-        if (cachedFileInfo != null) {
-            return cachedFileInfo;
-        }
-
-        String volumeLabel = getVolumeInfo().getVolumeLabel();
-
-        return getStorageResourceUseCase.getStorageResource(path, volumeLabel)
-                .map(storageResource -> {
-                    FileInfo fileInfo = fileInfoMapper.toFileInfo(storageResource);
-                    filesByPath.put(path, fileInfo);
-
-                    return fileInfo;
-                })
-                .orElseThrow(() -> new NTStatusException(0xC0000034)); // STATUS_OBJECT_NAME_NOT_FOUND
-    }
-
-    private OpenResult  createOpenResult(String path, FileInfo fileInfo) {
-        long handle = fileHandle.incrementAndGet();
-        pathsByHandle.put(handle, path);
-
-        return new OpenResult(handle, fileInfo);
     }
 
     private boolean isRootDirectory(String path) {

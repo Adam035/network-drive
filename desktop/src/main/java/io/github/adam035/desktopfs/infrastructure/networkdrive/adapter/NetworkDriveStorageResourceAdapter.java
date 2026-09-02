@@ -19,7 +19,7 @@ public class NetworkDriveStorageResourceAdapter implements StorageResourcePort {
     private final RestClient networkDriveClient;
 
     @Override
-    @Cacheable(cacheNames = "storageResources", key = "#path")
+    @Cacheable(cacheNames = "storageResources", key = "#path", unless = "#result == null")
     public Optional<StorageResource> getStorageResource(String path) {
         try {
             StorageResource storageResource = networkDriveClient.get()
@@ -34,6 +34,7 @@ public class NetworkDriveStorageResourceAdapter implements StorageResourcePort {
     }
 
     @Override
+    @CacheEvict(cacheNames = "storageResources", allEntries = true)
     public void moveStorageResource(String oldPath, String newPath, boolean replaceIfExists) {
         networkDriveClient.patch()
                 .uri("/storage-resources/move")
@@ -43,7 +44,7 @@ public class NetworkDriveStorageResourceAdapter implements StorageResourcePort {
     }
 
     @Override
-    @CacheEvict(cacheNames = "storageResources", key = "#path")
+    @CacheEvict(cacheNames = "storageResources", allEntries = true)
     public void deleteStorageResource(String path) {
         networkDriveClient.delete()
                 .uri("/storage-resources".concat(path))

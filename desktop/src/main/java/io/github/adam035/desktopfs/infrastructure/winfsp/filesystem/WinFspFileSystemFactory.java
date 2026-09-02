@@ -1,8 +1,8 @@
 package io.github.adam035.desktopfs.infrastructure.winfsp.filesystem;
 
 import io.github.adam035.desktopfs.application.port.VolumePort;
-import io.github.adam035.desktopfs.application.usecase.*;
-import io.github.adam035.desktopfs.infrastructure.winfsp.mapper.FileInfoMapper;
+import io.github.adam035.desktopfs.infrastructure.winfsp.registry.OpenHandleRegistry;
+import io.github.adam035.desktopfs.infrastructure.winfsp.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -10,39 +10,48 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class WinFspFileSystemFactory {
 
-    private final RandomAccessService randomAccessService;
-
-    private final FileInfoMapper fileInfoMapper;
-
     private final VolumePort volumePort;
 
-    private final ReadDirectoryUseCase readDirectoryUseCase;
+    private final OpenHandleRegistry openHandleRegistry;
 
-    private final CreateDirectoryUseCase createDirectoryUseCase;
+    private final CleanupService cleanupService;
 
-    private final DownloadFileUseCase downloadFileUseCase;
+    private final CloseService closeService;
 
-    private final UploadFileUseCase uploadFileUseCase;
+    private final CreateService createService;
 
-    private final GetStorageResourceUseCase getStorageResourceUseCase;
+    private final FlushService flushService;
 
-    private final MoveStorageResourceUseCase moveStorageResourceUseCase;
+    private final OpenService openService;
 
-    private final DeleteStorageResourceUseCase deleteStorageResourceUseCase;
+    private final OverwriteService overwriteService;
+
+    private final ReadDirectoryService readDirectoryService;
+
+    private final ReadService readService;
+
+    private final RenameService renameService;
+
+    private final SecurityService securityService;
+
+    private final WriteService writeService;
 
     public WinFspFileSystem createFileSystem(String volumeLabel) {
         return new WinFspFileSystem(
                 volumeLabel,
-                randomAccessService,
                 volumePort,
-                readDirectoryUseCase,
-                createDirectoryUseCase,
-                downloadFileUseCase,
-                uploadFileUseCase,
-                fileInfoMapper,
-                getStorageResourceUseCase,
-                deleteStorageResourceUseCase,
-                moveStorageResourceUseCase
+                openHandleRegistry,
+                cleanupService,
+                closeService,
+                createService,
+                flushService,
+                openService,
+                overwriteService,
+                readDirectoryService,
+                readService,
+                renameService,
+                securityService,
+                writeService
         );
     }
 

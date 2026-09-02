@@ -14,7 +14,13 @@ public class DownloadFileUseCase {
     private final PathPort pathPort;
 
     public byte[] downloadFile(String path, long offset, int length, String volumeLabel) {
-        return filePort.downloadFile(pathPort.normalizePath(path, volumeLabel), offset, length);
+        byte[] bytes = filePort.downloadFile(pathPort.normalizePath(path, volumeLabel), offset, length);
+
+        if (bytes == null) {
+            bytes = new byte[0];
+        }
+
+        return bytes;
     }
 
 }
