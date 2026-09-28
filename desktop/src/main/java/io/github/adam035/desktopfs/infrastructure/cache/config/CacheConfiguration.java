@@ -4,32 +4,53 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
+import org.springframework.cache.caffeine.CaffeineCache;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
+import java.util.List;
 
-@Configuration
 @EnableCaching
+@Configuration
 public class CacheConfiguration {
 
-    @Value("${network-drive.cache.expire-after-write}")
-    private long expireAfterWrite;
+    @Value("${network-drive.cache.storage-resources.expire-after-write}")
+    private long storageResourcesExpireAfterWrite;
 
-    @Value("${network-drive.cache.max-size}")
-    private long maxSize;
+    @Value("${network-drive.cache.storage-resources.maximum-size}")
+    private long storageResourcesMaximumSize;
+
+    @Value("${network-drive.cache.directory-listings.expire-after-write}")
+    private long directoryListingsExpireAfterWrite;
+
+    @Value("${network-drive.cache.directory-listings.maximum-size}")
+    private long directoryListingsMaximumSize;
 
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager manager = new CaffeineCacheManager("storageResources");
+        SimpleCacheManager cacheManager = new SimpleCacheManager();
 
-        manager.setCaffeine(
+        CaffeineCache storageResources = new CaffeineCache(
+                "storageResources",
                 Caffeine.newBuilder()
-                        .expireAfterWrite(Duration.ofSeconds(expireAfterWrite))
-                        .maximumSize(maxSize)
+                        .expireAfterWrite(Duration.ofSeconds(storageResourcesExpireAfterWrite))
+                        .maximumSize(storageResourcesMaximumSize)
+                        .build()
         );
 
-        return manager;
+        CaffeineCache directoryListings = new CaffeineCache(
+                "directoryListings",
+                Caffeine.newBuilder()
+                        .expireAfterWrite(Duration.ofSeconds(directoryListingsExpireAfterWrite))
+                        .maximumSize(directoryListingsMaximumSize)
+                        .build()
+        );
+
+        cacheManager.setCaches(List.of(storageResources, directoryListings));
+
+        return cacheManager;
     }
+
 }
