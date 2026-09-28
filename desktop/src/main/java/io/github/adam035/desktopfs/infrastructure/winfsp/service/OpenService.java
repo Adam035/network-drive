@@ -4,9 +4,10 @@ import com.github.jnrwinfspteam.jnrwinfsp.api.*;
 import io.github.adam035.desktopfs.application.usecase.GetStorageResourceUseCase;
 import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
 import io.github.adam035.desktopfs.infrastructure.winfsp.mapper.FileInfoMapper;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.OpenHandleRegistry;
+import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.Optional;
 import java.util.Set;
@@ -15,40 +16,40 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class OpenService {
     private final GetStorageResourceUseCase getStorageResourceUseCase;
-    private final OpenHandleRegistry openHandleRegistry;
+    private final FileHandleRegistry fileHandleRegistry;
     private final FileInfoMapper fileInfoMapper;
 
-    public Optional<FileInfo> findInfo(String path, String volumeLabel) throws NTStatusException {
-        String normalized = OpenHandleRegistry.normalize(path);
-        Optional<OpenFileState> local = openHandleRegistry.find(volumeLabel, normalized);
-        if (local.isPresent()) {
-            return Optional.of(local.get().getFileInfo());
+    public Optional<FileInfo> findFileInfo(String path, String volumeLabel) throws NTStatusException {
+        Optional<OpenFileState> cachedState = fileHandleRegistry.findByPath(path);
+
+        if (cachedState.isPresent()) {
+            return Optional.of(cachedState.get().getFileInfo());
         }
+
         try {
-            return getStorageResourceUseCase.getStorageResource(normalized, volumeLabel)
+            return getStorageResourceUseCase.getStorageResource(path, volumeLabel)
                     .map(fileInfoMapper::toFileInfo);
-        } catch (RuntimeException e) {
-            throw new NTStatusException(0xC0000185);
+        } catch (HttpClientErrorException e) {
+            throw new NTStatusException(0xC0000185); // STATUS_IO_DEVICE_ERROR
         }
     }
 
-    public OpenResult open(long handle, String path, Set<CreateOptions> options, String volumeLabel)
-            throws NTStatusException {
-        String normalized = OpenHandleRegistry.normalize(path);
-        OpenFileState state = openHandleRegistry.find(volumeLabel, normalized).orElse(null);
-        if (state == null) {
-            FileInfo info = findInfo(normalized, volumeLabel)
-                    .orElseThrow(() -> new NTStatusException(0xC0000034)); // NAME_NOT_FOUND
-            boolean directory = info.getFileAttributes().contains(FileAttributes.FILE_ATTRIBUTE_DIRECTORY);
-            state = new OpenFileState(volumeLabel, normalized, directory, info);
+    public OpenResult open(
+            long handle,
+            String path,
+            Set<CreateOptions> options,
+            String volumeLabel
+    ) throws NTStatusException {
+        OpenFileState openFileState = fileHandleRegistry.require(handle);
+
+        if (openFileState == null) {
+            FileInfo fileInfo = findFileInfo(path, volumeLabel)
+                    .orElseThrow(() -> new NTStatusException(0xC0000034)); // STATUS_OBJECT_NAME_NOT_FOUND
+            openFileState = new OpenFileState(path, fileInfo);
+            fileHandleRegistry.register(handle, openFileState);
         }
-        if (options.contains(CreateOptions.FILE_DIRECTORY_FILE) && !state.isDirectory()) {
-            throw new NTStatusException(0xC0000103); // NOT_A_DIRECTORY
-        }
-        if (options.contains(CreateOptions.FILE_NON_DIRECTORY_FILE) && state.isDirectory()) {
-            throw new NTStatusException(0xC00000BA); // FILE_IS_A_DIRECTORY
-        }
-        openHandleRegistry.register(handle, state);
-        return new OpenResult(handle, state.getFileInfo());
+
+
+        return new OpenResult(handle, openFileState.getFileInfo());
     }
 }

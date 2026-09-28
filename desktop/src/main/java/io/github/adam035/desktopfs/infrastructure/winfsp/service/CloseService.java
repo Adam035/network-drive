@@ -2,8 +2,7 @@ package io.github.adam035.desktopfs.infrastructure.winfsp.service;
 
 import com.github.jnrwinfspteam.jnrwinfsp.api.OpenContext;
 import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.OpenHandleRegistry;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.TemporaryFileRegistry;
+import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,26 +13,22 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Slf4j
 public class CloseService {
-    private final OpenHandleRegistry openHandleRegistry;
-    private final TemporaryFileRegistry temporaryFileRegistry;
+
+    private final FileHandleRegistry fileHandleRegistry;
+
+    private final TemporaryFileService temporaryFileService;
 
     public void close(OpenContext ctx) {
-        OpenFileState state = openHandleRegistry.release(ctx.getFileHandle());
+        OpenFileState openFileState = fileHandleRegistry.release(ctx.getFileHandle());
 
-        if (state == null || state.getOpenHandleCount() != 0) {
+        if (openFileState == null) {
             return;
         }
 
-        boolean discard = state.isDeleted() || !state.isDirty();
         try {
-            temporaryFileRegistry.close(state, discard);
-            if (discard) {
-                openHandleRegistry.forget(state);
-            } else {
-                log.error("Unsynchronized file retained: {} -> {}", state.getPath(), state.getTemporaryPath());
-            }
+            temporaryFileService.close(openFileState);
         } catch (IOException e) {
-            log.error("Cannot close staging file {}", state.getTemporaryPath(), e);
+            log.error("Cannot close staging file {}", openFileState.getPath(), e);
         }
     }
 }

@@ -3,7 +3,7 @@ package io.github.adam035.desktopfs.infrastructure.winfsp.filesystem;
 import com.github.jnrwinfspteam.jnrwinfsp.api.*;
 import io.github.adam035.desktopfs.application.dto.VolumeResult;
 import io.github.adam035.desktopfs.application.port.VolumePort;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.OpenHandleRegistry;
+import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
 import io.github.adam035.desktopfs.infrastructure.winfsp.service.*;
 import jnr.ffi.Pointer;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ public class WinFspFileSystem extends WinFspStubFS {
 
     private final Object cacheLock;
 
-    private final OpenHandleRegistry openHandleRegistry;
+    private final FileHandleRegistry fileHandleRegistry;
 
     private final CleanupService cleanupService;
     private final CloseService closeService;
@@ -35,7 +35,7 @@ public class WinFspFileSystem extends WinFspStubFS {
     public WinFspFileSystem(
             String volumeLabel,
             VolumePort volumePort,
-            OpenHandleRegistry openHandleRegistry,
+            FileHandleRegistry fileHandleRegistry,
             CleanupService cleanupService,
             CloseService closeService,
             CreateService createService,
@@ -49,7 +49,7 @@ public class WinFspFileSystem extends WinFspStubFS {
             WriteService writeService
 
     ) {
-        this.openHandleRegistry = openHandleRegistry;
+        this.fileHandleRegistry = fileHandleRegistry;
         this.cleanupService = cleanupService;
         this.closeService = closeService;
         this.createService = createService;
@@ -65,7 +65,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         volumeResult = volumePort.getVolume(volumeLabel)
                 .orElseThrow(() -> new RuntimeException("Volume not found: " + volumeLabel)); // TODO
 
-        cacheLock = openHandleRegistry;
+        cacheLock = fileHandleRegistry;
     }
 
     @Override
@@ -102,7 +102,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         );
 
         synchronized (cacheLock) {
-            return createService.create(fileName, createOptions, openHandleRegistry.nextHandle(), volumeResult.volumeLabel(), fileAttributes, securityDescriptor, allocationSize);
+            return createService.create(fileName, createOptions, fileHandleRegistry.nextHandle(), volumeResult.volumeLabel(), fileAttributes, securityDescriptor, allocationSize);
         }
     }
 
@@ -112,7 +112,7 @@ public class WinFspFileSystem extends WinFspStubFS {
 
         synchronized (cacheLock) {
 
-            return openService.open(openHandleRegistry.nextHandle(), fileName, createOptions, volumeResult.volumeLabel());
+            return openService.open(fileHandleRegistry.nextHandle(), fileName, createOptions, volumeResult.volumeLabel());
         }
     }
 
@@ -144,7 +144,6 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("CLOSE - ctx={}", ctx);
 
         synchronized (cacheLock) {
-
             closeService.close(ctx);
         }
     }
@@ -160,12 +159,21 @@ public class WinFspFileSystem extends WinFspStubFS {
     }
 
     @Override
-    public WriteResult write(OpenContext ctx, Pointer pBuffer, long offset, int length, boolean c, boolean constrainedIo) throws NTStatusException {
-        log.info("WRITE - ctx={}, pBuffer={}, offset={}, length={}, c={}, constrainedIo={}", ctx, pBuffer, offset, length, c, constrainedIo);
+    public WriteResult write(
+            OpenContext ctx,
+            Pointer pBuffer,
+            long offset,
+            int length,
+            boolean c,
+            boolean constrainedIo
+    ) throws NTStatusException {
+        log.info(
+                "WRITE - ctx={}, pBuffer={}, offset={}, length={}, c={}, constrainedIo={}",
+                ctx, pBuffer, offset, length, c, constrainedIo
+        );
 
         synchronized (cacheLock) {
-
-            return writeService.write(ctx, pBuffer, offset, length, c, constrainedIo);
+            return writeService.write(ctx, pBuffer, offset, length, c, constrainedIo, volumeResult.volumeLabel());
         }
     }
 
@@ -174,7 +182,6 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("FLUSH - ctx={}", ctx);
 
         synchronized (cacheLock) {
-
             return flushService.flush(ctx, volumeResult.volumeLabel());
         }
     }
@@ -184,7 +191,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("GET FILE INFO - ctx={}", ctx);
 
         synchronized (cacheLock) {
-            return openHandleRegistry.getFileInfoByFileHandle(ctx.getFileHandle());
+            return fileHandleRegistry.require(ctx.getFileHandle()).getFileInfo();
         }
     }
 
@@ -202,7 +209,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("SET FILE SIZE - ctx={}, newSize={}, setAllocationSize={}", ctx, newSize, setAllocationSize);
 
         synchronized (cacheLock) {
-            return writeService.setFileSize(ctx, newSize, setAllocationSize);
+            return writeService.setFileSize(ctx, newSize, setAllocationSize, volumeResult.volumeLabel());
         }
     }
 
@@ -210,7 +217,7 @@ public class WinFspFileSystem extends WinFspStubFS {
     public void canDelete(OpenContext ctx) throws NTStatusException {
         log.info("CAN DELETE - ctx={}", ctx);
 
-        String path = openHandleRegistry.getPathByFileHandle(ctx.getFileHandle());
+        String path = fileHandleRegistry.require(ctx.getFileHandle()).getPath();
 
         if (isRootDirectory(path)) {
             throw new NTStatusException(0xC0000022); // STATUS_ACCESS_DENIED
@@ -263,9 +270,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("GET DIR INFO BY NAME - parentDirCtx={}, fileName={}", parentDirCtx, fileName);
 
         synchronized (cacheLock) {
-
-            return readDirectoryService.getDirInfoByName(parentDirCtx, fileName);
-
+            return readDirectoryService.getDirInfoByName(parentDirCtx, fileName, volumeResult.volumeLabel());
         }
     }
 
