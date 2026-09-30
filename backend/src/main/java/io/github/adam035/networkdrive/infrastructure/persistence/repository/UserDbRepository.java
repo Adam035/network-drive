@@ -37,6 +37,13 @@ class UserDbRepository implements UserRepository {
     }
 
     @Override
+    public List<User> findAllById(Iterable<String> ids) {
+        return userJpaRepository.findAllById(ids).stream()
+                .map(userMapper::mapToModel)
+                .toList();
+    }
+
+    @Override
     public List<User> findByUsernameOrEmail(String username, String email) {
         return userJpaRepository.findByUsernameOrEmail(username, email).stream()
                 .map(userMapper::mapToModel)
