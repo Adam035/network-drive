@@ -1,8 +1,9 @@
 package io.github.adam035.desktopfs.infrastructure.winfsp.service;
 
 import com.github.jnrwinfspteam.jnrwinfsp.api.OpenContext;
-import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
+import io.github.adam035.desktopfs.domain.model.OpenFileState;
+import io.github.adam035.desktopfs.domain.registry.OpenFileStateRegistry;
+import io.github.adam035.desktopfs.domain.service.TemporaryFileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,12 +15,12 @@ import java.io.IOException;
 @Slf4j
 public class CloseService {
 
-    private final FileHandleRegistry fileHandleRegistry;
+    private final OpenFileStateRegistry openFileStateRegistry;
 
     private final TemporaryFileService temporaryFileService;
 
     public void close(OpenContext ctx) {
-        OpenFileState openFileState = fileHandleRegistry.release(ctx.getFileHandle());
+        OpenFileState openFileState = openFileStateRegistry.release(ctx.getFileHandle());
 
         if (openFileState == null) {
             return;

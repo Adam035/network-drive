@@ -34,7 +34,7 @@ public class NetworkDriveStorageResourceAdapter implements StorageResourcePort {
     }
 
     @Override
-    @CacheEvict(cacheNames = "storageResources", allEntries = true)
+    @CacheEvict(cacheNames = {"storageResources", "directoryListings"}, allEntries = true)
     public void moveStorageResource(String oldPath, String newPath, boolean replaceIfExists) {
         networkDriveClient.patch()
                 .uri("/storage-resources/move")

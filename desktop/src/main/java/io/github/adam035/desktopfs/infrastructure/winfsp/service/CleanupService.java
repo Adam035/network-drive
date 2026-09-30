@@ -2,8 +2,9 @@ package io.github.adam035.desktopfs.infrastructure.winfsp.service;
 
 import com.github.jnrwinfspteam.jnrwinfsp.api.*;
 import io.github.adam035.desktopfs.application.usecase.DeleteStorageResourceUseCase;
-import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
+import io.github.adam035.desktopfs.domain.model.OpenFileState;
+import io.github.adam035.desktopfs.domain.registry.OpenFileStateRegistry;
+import io.github.adam035.desktopfs.domain.service.FileSynchronizationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,7 +17,7 @@ import java.util.Set;
 @Slf4j
 public class CleanupService {
 
-    private final FileHandleRegistry fileHandleRegistry;
+    private final OpenFileStateRegistry openFileStateRegistry;
 
     private final DeleteStorageResourceUseCase deleteStorageResourceUseCase;
 
@@ -24,7 +25,7 @@ public class CleanupService {
 
     public void cleanup(OpenContext ctx, Set<CleanupFlags> flags, String volumeLabel) {
         try {
-            OpenFileState openFileState = fileHandleRegistry.require(ctx.getFileHandle());
+            OpenFileState openFileState = openFileStateRegistry.require(ctx.getFileHandle());
 
             if (flags.contains(CleanupFlags.DELETE)) {
                 deleteStorageResourceUseCase.deleteStorageResource(openFileState.getPath(), volumeLabel);

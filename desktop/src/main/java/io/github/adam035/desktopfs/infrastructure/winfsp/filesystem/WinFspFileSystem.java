@@ -3,7 +3,7 @@ package io.github.adam035.desktopfs.infrastructure.winfsp.filesystem;
 import com.github.jnrwinfspteam.jnrwinfsp.api.*;
 import io.github.adam035.desktopfs.application.dto.VolumeResult;
 import io.github.adam035.desktopfs.application.port.VolumePort;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
+import io.github.adam035.desktopfs.domain.registry.OpenFileStateRegistry;
 import io.github.adam035.desktopfs.infrastructure.winfsp.service.*;
 import jnr.ffi.Pointer;
 import lombok.extern.slf4j.Slf4j;
@@ -14,28 +14,38 @@ import java.util.function.Predicate;
 @Slf4j
 public class WinFspFileSystem extends WinFspStubFS {
 
+    private final OpenFileStateRegistry openFileStateRegistry;
+
     private final VolumeResult volumeResult;
 
     private final Object cacheLock;
 
-    private final FileHandleRegistry fileHandleRegistry;
-
     private final CleanupService cleanupService;
+
     private final CloseService closeService;
+
     private final CreateService createService;
+
     private final FlushService flushService;
+
     private final OpenService openService;
+
     private final OverwriteService overwriteService;
+
     private final ReadDirectoryService readDirectoryService;
+
     private final ReadService readService;
+
     private final RenameService renameService;
+
     private final SecurityService securityService;
+
     private final WriteService writeService;
 
     public WinFspFileSystem(
             String volumeLabel,
             VolumePort volumePort,
-            FileHandleRegistry fileHandleRegistry,
+            OpenFileStateRegistry openFileStateRegistry,
             CleanupService cleanupService,
             CloseService closeService,
             CreateService createService,
@@ -49,7 +59,7 @@ public class WinFspFileSystem extends WinFspStubFS {
             WriteService writeService
 
     ) {
-        this.fileHandleRegistry = fileHandleRegistry;
+        this.openFileStateRegistry = openFileStateRegistry;
         this.cleanupService = cleanupService;
         this.closeService = closeService;
         this.createService = createService;
@@ -65,7 +75,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         volumeResult = volumePort.getVolume(volumeLabel)
                 .orElseThrow(() -> new RuntimeException("Volume not found: " + volumeLabel)); // TODO
 
-        cacheLock = fileHandleRegistry;
+        cacheLock = openFileStateRegistry;
     }
 
     @Override
@@ -102,7 +112,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         );
 
         synchronized (cacheLock) {
-            return createService.create(fileName, createOptions, fileHandleRegistry.nextHandle(), volumeResult.volumeLabel(), fileAttributes, securityDescriptor, allocationSize);
+            return createService.create(fileName, createOptions, openFileStateRegistry.nextHandle(), volumeResult.volumeLabel(), fileAttributes, securityDescriptor, allocationSize);
         }
     }
 
@@ -112,7 +122,7 @@ public class WinFspFileSystem extends WinFspStubFS {
 
         synchronized (cacheLock) {
 
-            return openService.open(fileHandleRegistry.nextHandle(), fileName, createOptions, volumeResult.volumeLabel());
+            return openService.open(openFileStateRegistry.nextHandle(), fileName, createOptions, volumeResult.volumeLabel());
         }
     }
 
@@ -191,7 +201,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("GET FILE INFO - ctx={}", ctx);
 
         synchronized (cacheLock) {
-            return fileHandleRegistry.require(ctx.getFileHandle()).getFileInfo();
+            return openService.getFileInfo(ctx.getFileHandle());
         }
     }
 
@@ -217,7 +227,7 @@ public class WinFspFileSystem extends WinFspStubFS {
     public void canDelete(OpenContext ctx) throws NTStatusException {
         log.info("CAN DELETE - ctx={}", ctx);
 
-        String path = fileHandleRegistry.require(ctx.getFileHandle()).getPath();
+        String path = openFileStateRegistry.require(ctx.getFileHandle()).getPath();
 
         if (isRootDirectory(path)) {
             throw new NTStatusException(0xC0000022); // STATUS_ACCESS_DENIED

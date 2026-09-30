@@ -1,7 +1,7 @@
 package io.github.adam035.desktopfs.infrastructure.winfsp.filesystem;
 
 import io.github.adam035.desktopfs.application.port.VolumePort;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
+import io.github.adam035.desktopfs.domain.registry.OpenFileStateRegistry;
 import io.github.adam035.desktopfs.infrastructure.winfsp.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -10,9 +10,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class WinFspFileSystemFactory {
 
-    private final VolumePort volumePort;
+    private final OpenFileStateRegistry openFileStateRegistry;
 
-    private final FileHandleRegistry fileHandleRegistry;
+    private final VolumePort volumePort;
 
     private final CleanupService cleanupService;
 
@@ -40,7 +40,7 @@ public class WinFspFileSystemFactory {
         return new WinFspFileSystem(
                 volumeLabel,
                 volumePort,
-                fileHandleRegistry,
+                openFileStateRegistry,
                 cleanupService,
                 closeService,
                 createService,

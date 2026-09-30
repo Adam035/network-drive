@@ -1,8 +1,11 @@
 package io.github.adam035.desktopfs.infrastructure.winfsp.service;
 
 import com.github.jnrwinfspteam.jnrwinfsp.api.*;
-import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
+import io.github.adam035.desktopfs.domain.model.OpenFileState;
+import io.github.adam035.desktopfs.domain.service.FileContentService;
+import io.github.adam035.desktopfs.domain.service.TemporaryFileService;
+import io.github.adam035.desktopfs.infrastructure.winfsp.mapper.FileInfoMapper;
+import io.github.adam035.desktopfs.domain.registry.OpenFileStateRegistry;
 import jnr.ffi.Pointer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +19,12 @@ import java.io.IOException;
 public class WriteService {
     private static final long ALLOCATION_UNIT = 512;
 
-    private final FileHandleRegistry fileHandleRegistry;
+    private final OpenFileStateRegistry openFileStateRegistry;
+
+    private final FileInfoMapper fileInfoMapper;
+
     private final FileContentService fileContentService;
+
     private final TemporaryFileService temporaryFileService;
 
     public WriteResult write(
@@ -29,24 +36,24 @@ public class WriteService {
             boolean constrainedIo,
             String volumeLabel
     ) throws NTStatusException {
-        OpenFileState openFileState = fileHandleRegistry.require(ctx.getFileHandle());
+        OpenFileState openFileState = openFileStateRegistry.require(ctx.getFileHandle());
 
         synchronized (openFileState) {
-            FileInfo fileInfo = openFileState.getFileInfo();
+            var resource = openFileState.getStorageResource();
 
             if (writeToEndOfFile && !constrainedIo) {
-                offset = fileInfo.getFileSize();
+                offset = resource.getSize();
             }
 
-            int bytesToWrite = constrainedIo ? Math.clamp(fileInfo.getFileSize() - offset, 0, length) : length;
+            int bytesToWrite = constrainedIo ? Math.clamp(resource.getSize() - offset, 0, length) : length;
 
             if (bytesToWrite == 0) {
-                return new WriteResult(0, fileInfo);
+                return new WriteResult(0, fileInfoMapper.toFileInfo(openFileState));
             }
 
             try {
                 long endOffset = Math.addExact(offset, bytesToWrite);
-                long newFileSize = Math.max(fileInfo.getFileSize(), endOffset);
+                long newFileSize = Math.max(resource.getSize(), endOffset);
                 long newAllocationSize = allocationSize(newFileSize);
 
                 if (openFileState.getTemporaryFile() == null) {
@@ -59,10 +66,10 @@ public class WriteService {
                 openFileState.setSynchronized(false);
                 temporaryFileService.write(openFileState, offset, bytes);
 
-                fileInfo.setFileSize(newFileSize);
-                fileInfo.setAllocationSize(Math.max(fileInfo.getAllocationSize(), newAllocationSize));
+                resource.setSize(newFileSize);
+                openFileState.setAllocationSize(Math.max(openFileState.getAllocationSize(), newAllocationSize));
 
-                return new WriteResult(bytesToWrite, fileInfo);
+                return new WriteResult(bytesToWrite, fileInfoMapper.toFileInfo(openFileState));
             } catch (IOException e) {
                 log.error("Cannot write {} at {}", openFileState.getPath(), offset, e);
                 throw new NTStatusException(0xC0000185); // STATUS_IO_DEVICE_ERROR
@@ -76,16 +83,16 @@ public class WriteService {
             boolean setAllocationSize,
             String volumeLabel
     ) throws NTStatusException {
-        OpenFileState openFileState = fileHandleRegistry.require(openContext.getFileHandle());
+        OpenFileState openFileState = openFileStateRegistry.require(openContext.getFileHandle());
 
         synchronized (openFileState) {
-            FileInfo info = openFileState.getFileInfo();
+            var resource = openFileState.getStorageResource();
 
             try {
                 long newAllocationSize = allocationSize(newSize);
                 boolean contentChanges = setAllocationSize
-                        ? newSize < info.getFileSize()
-                        : newSize != info.getFileSize();
+                        ? newSize < resource.getSize()
+                        : newSize != resource.getSize();
 
                 if (contentChanges) {
                     if (openFileState.getTemporaryFile() == null) {
@@ -94,14 +101,14 @@ public class WriteService {
 
                     openFileState.setSynchronized(false);
                     temporaryFileService.setLength(openFileState, newSize);
-                    info.setFileSize(newSize);
+                    resource.setSize(newSize);
                 }
 
-                info.setAllocationSize(setAllocationSize
+                openFileState.setAllocationSize(setAllocationSize
                         ? newAllocationSize
-                        : Math.max(info.getAllocationSize(), newAllocationSize));
+                        : Math.max(openFileState.getAllocationSize(), newAllocationSize));
 
-                return info;
+                return fileInfoMapper.toFileInfo(openFileState);
             } catch (IOException | RuntimeException e) {
                 log.error("Cannot resize {}", openFileState.getPath(), e);
                 throw new NTStatusException(0xC0000185); // STATUS_IO_DEVICE_ERROR

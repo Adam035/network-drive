@@ -1,6 +1,6 @@
-package io.github.adam035.desktopfs.infrastructure.winfsp.registry;
+package io.github.adam035.desktopfs.domain.registry;
 
-import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
+import io.github.adam035.desktopfs.domain.model.OpenFileState;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
 
@@ -8,14 +8,14 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
-public class FileHandleRegistry {
+public class OpenFileStateRegistry {
 
     private final AtomicLong handles;
 
     @Getter
     private final Map<Long, OpenFileState> openFileStates;
 
-    public FileHandleRegistry() {
+    public OpenFileStateRegistry() {
         handles = new AtomicLong();
         openFileStates = new HashMap<>();
     }
@@ -48,6 +48,22 @@ public class FileHandleRegistry {
         return openFileStates.values().stream()
                 .filter(state -> state.getPath().equals(path))
                 .findFirst();
+    }
+
+    public synchronized void renamePaths(String oldPath, String newPath) {
+        String prefix = oldPath.endsWith("\\") ? oldPath : oldPath.concat("\\");
+        for (OpenFileState state : openFileStates.values()) {
+            String path = state.getPath();
+
+            if (path.equalsIgnoreCase(oldPath) || path.regionMatches(true, 0, prefix, 0, prefix.length())) {
+                String renamedPath = newPath + path.substring(oldPath.length());
+                state.setPath(renamedPath);
+
+                if (path.equalsIgnoreCase(oldPath)) {
+                    state.getStorageResource().setName(newPath.substring(newPath.lastIndexOf('\\') + 1));
+                }
+            }
+        }
     }
 
 }

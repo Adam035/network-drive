@@ -1,6 +1,6 @@
-package io.github.adam035.desktopfs.infrastructure.winfsp.service;
+package io.github.adam035.desktopfs.domain.service;
 
-import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
+import io.github.adam035.desktopfs.domain.model.OpenFileState;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;

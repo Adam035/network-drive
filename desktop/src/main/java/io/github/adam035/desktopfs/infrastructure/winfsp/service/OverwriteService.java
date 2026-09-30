@@ -1,8 +1,10 @@
 package io.github.adam035.desktopfs.infrastructure.winfsp.service;
 
 import com.github.jnrwinfspteam.jnrwinfsp.api.*;
-import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
+import io.github.adam035.desktopfs.domain.model.OpenFileState;
+import io.github.adam035.desktopfs.domain.service.TemporaryFileService;
+import io.github.adam035.desktopfs.infrastructure.winfsp.mapper.FileInfoMapper;
+import io.github.adam035.desktopfs.domain.registry.OpenFileStateRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,7 +16,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Slf4j
 public class OverwriteService {
-    private final FileHandleRegistry fileHandleRegistry;
+    private final OpenFileStateRegistry openFileStateRegistry;
+
+    private final FileInfoMapper fileInfoMapper;
+
     private final TemporaryFileService temporaryFileService;
 
     public FileInfo overwrite(
@@ -23,33 +28,17 @@ public class OverwriteService {
             boolean replaceAttributes,
             long allocationSize
     ) throws NTStatusException {
-        OpenFileState openFileState = fileHandleRegistry.require(ctx.getFileHandle());
+        OpenFileState openFileState = openFileStateRegistry.require(ctx.getFileHandle());
 
         try {
             temporaryFileService.truncate(openFileState);
             openFileState.setSynchronized(false);
 
-            FileInfo fileInfo = openFileState.getFileInfo();
-            fileInfo.setFileSize(0);
-            fileInfo.setAllocationSize(allocationSize);
+            var resource = openFileState.getStorageResource();
+            resource.setSize(0L);
+            openFileState.setAllocationSize(allocationSize);
 
-            if (replaceAttributes) {
-                fileInfo.getFileAttributes().clear();
-            }
-
-            if (attributes != null) {
-                fileInfo.getFileAttributes().addAll(attributes);
-            }
-
-            fileInfo.getFileAttributes().remove(FileAttributes.FILE_ATTRIBUTE_DIRECTORY);
-
-            if (fileInfo.getFileAttributes().isEmpty()) {
-                fileInfo.getFileAttributes().add(FileAttributes.FILE_ATTRIBUTE_NORMAL);
-            } else if (fileInfo.getFileAttributes().size() > 1) {
-                fileInfo.getFileAttributes().remove(FileAttributes.FILE_ATTRIBUTE_NORMAL);
-            }
-
-            return fileInfo;
+            return fileInfoMapper.toFileInfo(openFileState);
         } catch (IOException e) {
             log.error("Cannot overwrite {}", openFileState.getPath(), e);
             throw new NTStatusException(0xC0000185); // STATUS_IO_DEVICE_ERROR

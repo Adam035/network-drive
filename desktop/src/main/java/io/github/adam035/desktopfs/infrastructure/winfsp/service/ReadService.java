@@ -2,8 +2,9 @@ package io.github.adam035.desktopfs.infrastructure.winfsp.service;
 
 import com.github.jnrwinfspteam.jnrwinfsp.api.*;
 import io.github.adam035.desktopfs.application.usecase.DownloadFileUseCase;
-import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
+import io.github.adam035.desktopfs.domain.model.OpenFileState;
+import io.github.adam035.desktopfs.domain.registry.OpenFileStateRegistry;
+import io.github.adam035.desktopfs.domain.service.TemporaryFileService;
 import jnr.ffi.Pointer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +16,11 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Slf4j
 public class ReadService {
-    private final FileHandleRegistry fileHandleRegistry;
+
+    private final OpenFileStateRegistry openFileStateRegistry;
+
     private final TemporaryFileService temporaryFileService;
+
     private final DownloadFileUseCase downloadFileUseCase;
 
     public long read(
@@ -26,13 +30,13 @@ public class ReadService {
             int length,
             String volumeLabel
     ) throws NTStatusException {
-        OpenFileState openFileState = fileHandleRegistry.require(openContext.getFileHandle());
+        OpenFileState openFileState = openFileStateRegistry.require(openContext.getFileHandle());
 
         if (offset < 0 || length < 0) {
             throw new NTStatusException(0xC000000D);
         }
 
-        long size = openFileState.getFileInfo().getFileSize();
+        long size = openFileState.getStorageResource().getSize();
 
         if (length == 0 || offset >= size) {
             return 0;

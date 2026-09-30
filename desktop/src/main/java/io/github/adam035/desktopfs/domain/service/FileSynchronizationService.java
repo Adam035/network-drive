@@ -1,7 +1,7 @@
-package io.github.adam035.desktopfs.infrastructure.winfsp.service;
+package io.github.adam035.desktopfs.domain.service;
 
 import io.github.adam035.desktopfs.application.usecase.UploadFileUseCase;
-import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
+import io.github.adam035.desktopfs.domain.model.OpenFileState;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,7 @@ public class FileSynchronizationService {
         }
 
         long size = temporaryFileService.length(openFileState);
-        if (size != openFileState.getFileInfo().getFileSize()) {
+        if (size != openFileState.getStorageResource().getSize()) {
             throw new IOException("Local size does not match metadata");
         }
 

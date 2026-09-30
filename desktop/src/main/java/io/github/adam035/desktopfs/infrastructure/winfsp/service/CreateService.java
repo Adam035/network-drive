@@ -3,9 +3,10 @@ package io.github.adam035.desktopfs.infrastructure.winfsp.service;
 import com.github.jnrwinfspteam.jnrwinfsp.api.*;
 import io.github.adam035.desktopfs.application.usecase.CreateDirectoryUseCase;
 import io.github.adam035.desktopfs.application.usecase.UploadFileUseCase;
-import io.github.adam035.desktopfs.infrastructure.winfsp.dto.OpenFileState;
+import io.github.adam035.desktopfs.domain.model.StorageResource;
+import io.github.adam035.desktopfs.domain.model.OpenFileState;
 import io.github.adam035.desktopfs.infrastructure.winfsp.mapper.FileInfoMapper;
-import io.github.adam035.desktopfs.infrastructure.winfsp.registry.FileHandleRegistry;
+import io.github.adam035.desktopfs.domain.registry.OpenFileStateRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,7 @@ public class CreateService {
 
     private final OpenService openService;
 
-    private final FileHandleRegistry fileHandleRegistry;
+    private final OpenFileStateRegistry openFileStateRegistry;
 
     private final FileInfoMapper fileInfoMapper;
 
@@ -55,33 +56,27 @@ public class CreateService {
             throw new NTStatusException(0xC0000103); // STATUS_NOT_A_DIRECTORY
         }
 
-        FileInfo fileInfo = options.contains(FILE_DIRECTORY_FILE)
+        StorageResource resource = options.contains(FILE_DIRECTORY_FILE)
                 ? createDirectory(path, volumeLabel)
-                : createFile(path, volumeLabel, allocationSize);
+                : createFile(path, volumeLabel);
 
-        register(path, handle, fileInfo);
-
-        return new OpenResult(handle, fileInfo);
+        OpenFileState state = new OpenFileState(path, resource);
+        if (resource.getType() == StorageResource.Type.FILE) {
+            state.setAllocationSize(allocationSize);
+        }
+        openFileStateRegistry.register(handle, state);
+        return new OpenResult(handle, fileInfoMapper.toFileInfo(state));
     }
 
-    private FileInfo createDirectory(String path, String volumeLabel) {
-        return fileInfoMapper.toFileInfo(createDirectoryUseCase.createDirectory(path, volumeLabel));
+    private StorageResource createDirectory(String path, String volumeLabel) {
+        return createDirectoryUseCase.createDirectory(path, volumeLabel);
     }
 
-    private FileInfo createFile(String path, String volumeLabel, long allocationSize) {
+    private StorageResource createFile(String path, String volumeLabel) throws NTStatusException {
         uploadFileUseCase.uploadFile(path, new byte[0], "application/octet-stream", volumeLabel);
 
-        FileInfo fileInfo = new FileInfo(path);
-        fileInfo.setFileSize(0L);
-        fileInfo.setAllocationSize(allocationSize);
-
-        return fileInfo;
+        return openService.findStorageResource(path, volumeLabel)
+                .orElseThrow(() -> new NTStatusException(0xC0000034)); // STATUS_OBJECT_NAME_NOT_FOUND
     }
-
-    private void register(String path, long handle, FileInfo fileInfo) {
-        OpenFileState openFileState = new OpenFileState(path, fileInfo);
-        fileHandleRegistry.register(handle, openFileState);
-    }
-
 
 }
