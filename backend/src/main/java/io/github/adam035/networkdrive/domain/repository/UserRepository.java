@@ -13,6 +13,8 @@ public interface UserRepository {
 
     Optional<User> findByUsername(String username);
 
+    List<User> findAllById(Iterable<String> ida);
+
     List<User> findByUsernameOrEmail(String username, String email);
 
 }

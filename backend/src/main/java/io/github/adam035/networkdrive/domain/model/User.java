@@ -2,6 +2,9 @@ package io.github.adam035.networkdrive.domain.model;
 
 import lombok.Data;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Data
 public class User {
 
@@ -11,11 +14,10 @@ public class User {
 
     private String email;
 
-    private Role role;
+    private AccountTier accountTier;
 
-    public enum Role {
-        USER,
-        ADMIN
-    }
+    private Set<Share> receivedShares = new HashSet<>();
+
+    private Set<Share> grantedShares = new HashSet<>();
 
 }

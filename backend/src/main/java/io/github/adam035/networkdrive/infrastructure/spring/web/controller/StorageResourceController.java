@@ -1,9 +1,9 @@
 package io.github.adam035.networkdrive.infrastructure.spring.web.controller;
 
-import io.github.adam035.networkdrive.application.dto.EditStorageResourceCommand;
+import io.github.adam035.networkdrive.application.dto.MoveStorageResourceCommand;
 import io.github.adam035.networkdrive.application.usecase.DeleteStorageResourceUseCase;
-import io.github.adam035.networkdrive.application.usecase.EditStorageResourceUseCase;
 import io.github.adam035.networkdrive.application.usecase.GetStorageResourceUseCase;
+import io.github.adam035.networkdrive.application.usecase.MoveStorageResourceUseCase;
 import io.github.adam035.networkdrive.domain.model.StorageResource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class StorageResourceController {
 
     private final GetStorageResourceUseCase getStorageResourceUseCase;
 
-    private final EditStorageResourceUseCase editStorageResourceUseCase;
+    private final MoveStorageResourceUseCase moveStorageResourceUseCase;
 
     private final DeleteStorageResourceUseCase deleteStorageResourceUseCase;
 
@@ -31,16 +31,10 @@ public class StorageResourceController {
         return getStorageResourceUseCase.getStorageResource(decodedPath);
     }
 
-    @PutMapping("/**")
-    public StorageResource editStorageResource(
-            HttpServletRequest request,
-            @RequestBody EditStorageResourceCommand editStorageResourceCommand
-    ) {
-        String path = request.getRequestURI().replace("/storage-resources", "");
-        String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
-        return editStorageResourceUseCase.editStorageResource(decodedPath, editStorageResourceCommand);
+    @PatchMapping("/move")
+    public void moveStorageResource(@RequestBody MoveStorageResourceCommand moveStorageResourceCommand) {
+        moveStorageResourceUseCase.moveStorageResource(moveStorageResourceCommand);
     }
-
 
     @DeleteMapping("/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)
