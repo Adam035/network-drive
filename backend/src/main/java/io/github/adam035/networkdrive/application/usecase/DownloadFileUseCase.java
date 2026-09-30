@@ -41,6 +41,10 @@ public class DownloadFileUseCase {
 
         byte[] bytes = storagePort.downloadFile(file.getStorageKey(), offset, length);
 
+        if (bytes == null) {
+            bytes = new byte[0];
+        }
+
         return Arrays.copyOf(bytes, (int) Math.min(length, file.getSize()));
     }
 
