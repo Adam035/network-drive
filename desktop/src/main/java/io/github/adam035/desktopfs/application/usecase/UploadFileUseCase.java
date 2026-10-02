@@ -13,8 +13,8 @@ public class UploadFileUseCase {
 
     private final PathPort pathPort;
 
-    public void uploadFile(String path, byte[] bytes, String mimeType, String volumeLabel) {
-        filePort.uploadFile(pathPort.normalizePath(path, volumeLabel), bytes, mimeType);
+    public void uploadFile(String path, byte[] bytes, String volumeLabel) {
+        filePort.uploadFile(pathPort.normalizePath(path, volumeLabel), bytes);
     }
 
 }

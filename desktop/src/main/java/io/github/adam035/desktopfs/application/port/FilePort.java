@@ -6,6 +6,6 @@ public interface FilePort {
 
     byte[] downloadFile(String path, long offset, int length);
 
-    void uploadFile(String path, byte[] bytes, String mimeType);
+    void uploadFile(String path, byte[] bytes);
 
 }

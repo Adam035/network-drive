@@ -28,10 +28,10 @@ public class NetworkDriveFileAdapter implements FilePort {
 
     @Override
     @CacheEvict(cacheNames = "storageResources", allEntries = true)
-    public void uploadFile(String path, byte[] bytes, String mimeType) {
+    public void uploadFile(String path, byte[] bytes) {
         networkDriveClient.post()
                 .uri("/files")
-                .body(new FileUploadRequest(path, bytes, mimeType))
+                .body(new FileUploadRequest(path, bytes))
                 .retrieve()
                 .toBodilessEntity();
     }

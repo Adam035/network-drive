@@ -33,7 +33,7 @@ public class FileSynchronizationService {
             throw new IOException("Incomplete local read");
         }
 
-        uploadFileUseCase.uploadFile(openFileState.getPath(), bytes, "application/octet-stream", volumeLabel);
+        uploadFileUseCase.uploadFile(openFileState.getPath(), bytes, volumeLabel);
         openFileState.setSynchronized(true);
     }
 }

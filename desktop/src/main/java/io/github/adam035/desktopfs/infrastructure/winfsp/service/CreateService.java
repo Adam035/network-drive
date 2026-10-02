@@ -73,7 +73,7 @@ public class CreateService {
     }
 
     private StorageResource createFile(String path, String volumeLabel) throws NTStatusException {
-        uploadFileUseCase.uploadFile(path, new byte[0], "application/octet-stream", volumeLabel);
+        uploadFileUseCase.uploadFile(path, new byte[0], volumeLabel);
 
         return openService.findStorageResource(path, volumeLabel)
                 .orElseThrow(() -> new NTStatusException(0xC0000034)); // STATUS_OBJECT_NAME_NOT_FOUND
