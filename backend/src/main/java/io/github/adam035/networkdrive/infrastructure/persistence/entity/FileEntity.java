@@ -13,9 +13,6 @@ import lombok.Setter;
 @PrimaryKeyJoinColumn(name = "id")
 public class FileEntity extends StorageResourceEntity {
 
-    @Column(name = "mime_type", nullable = false)
-    private String mimeType;
-
     @Column(name = "storage_key", nullable = false, unique = true, updatable = false)
     private String storageKey;
 

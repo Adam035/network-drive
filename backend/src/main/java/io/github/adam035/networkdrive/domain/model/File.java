@@ -11,8 +11,6 @@ import static io.github.adam035.networkdrive.domain.model.StorageResource.Type.F
 @EqualsAndHashCode(callSuper = true)
 public class File extends StorageResource {
 
-    private String mimeType;
-
     private String storageKey;
 
     private String checksum;
