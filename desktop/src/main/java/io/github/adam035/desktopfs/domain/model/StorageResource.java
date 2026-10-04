@@ -21,6 +21,8 @@ public class StorageResource {
 
     private Type type;
 
+    private byte[] securityDescriptor;
+
     private Instant createdAt;
 
     private Instant updatedAt;

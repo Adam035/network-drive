@@ -1,5 +1,6 @@
 package io.github.adam035.desktopfs.infrastructure.networkdrive.adapter;
 
+import io.github.adam035.desktopfs.application.port.SecurityPort;
 import io.github.adam035.desktopfs.application.port.StorageResourcePort;
 import io.github.adam035.desktopfs.domain.model.StorageResource;
 import io.github.adam035.desktopfs.infrastructure.networkdrive.dto.MoveStorageResourceRequest;
@@ -14,7 +15,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class NetworkDriveStorageResourceAdapter implements StorageResourcePort {
+public class NetworkDriveStorageResourceAdapter implements StorageResourcePort, SecurityPort {
 
     private final RestClient networkDriveClient;
 
@@ -44,10 +45,19 @@ public class NetworkDriveStorageResourceAdapter implements StorageResourcePort {
     }
 
     @Override
-    @CacheEvict(cacheNames = "storageResources", allEntries = true)
+    @CacheEvict(cacheNames = {"storageResources", "directoryListings"}, allEntries = true)
     public void deleteStorageResource(String path) {
         networkDriveClient.delete()
                 .uri("/storage-resources".concat(path))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    @Override
+    public void updateSecurityDescriptor(String path, byte[] securityDescriptor) {
+        networkDriveClient.patch()
+                .uri("/storage-resources".concat(path).concat("/security-descriptor"))
+                .body(securityDescriptor)
                 .retrieve()
                 .toBodilessEntity();
     }

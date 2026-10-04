@@ -105,14 +105,31 @@ public class WinFspFileSystem extends WinFspStubFS {
     }
 
     @Override
-    public OpenResult create(String fileName, Set<CreateOptions> createOptions, int grantedAccess, Set<FileAttributes> fileAttributes, byte[] securityDescriptor, long allocationSize, ReparsePoint reparsePoint) throws NTStatusException {
+    public OpenResult create(
+            String fileName,
+            Set<CreateOptions> createOptions,
+            int grantedAccess,
+            Set<FileAttributes> fileAttributes,
+            byte[] securityDescriptor,
+            long allocationSize,
+            ReparsePoint reparsePoint
+    ) throws NTStatusException {
         log.info(
-                "CREATE - fileName={}, createOptions={}, grantedAccess={}, fileAttributes={}, securityDescriptor={}, allocationSize={}, reparsePoint={}",
+                "CREATE - fileName={}, createOptions={}, grantedAccess={}, fileAttributes={}, " +
+                        "securityDescriptor={}, allocationSize={}, reparsePoint={}",
                 fileName, createOptions, grantedAccess, fileAttributes, securityDescriptor, allocationSize, reparsePoint
         );
 
         synchronized (cacheLock) {
-            return createService.create(fileName, createOptions, openFileStateRegistry.nextHandle(), volumeResult.volumeLabel(), fileAttributes, securityDescriptor, allocationSize);
+            return createService.create(
+                    fileName,
+                    createOptions,
+                    openFileStateRegistry.nextHandle(),
+                    volumeResult.volumeLabel(),
+                    fileAttributes,
+                    securityDescriptor,
+                    allocationSize
+            );
         }
     }
 
@@ -127,7 +144,12 @@ public class WinFspFileSystem extends WinFspStubFS {
     }
 
     @Override
-    public FileInfo overwrite(OpenContext ctx, Set<FileAttributes> fileAttributes, boolean replaceFileAttributes, long allocationSize) throws NTStatusException {
+    public FileInfo overwrite(
+            OpenContext ctx,
+            Set<FileAttributes> fileAttributes,
+            boolean replaceFileAttributes,
+            long allocationSize
+    ) throws NTStatusException {
         log.info(
                 "OVERWRITE - ctx={}, fileAttributes={}, replaceFileAttributes={}, allocationSize={}",
                 ctx, fileAttributes, replaceFileAttributes, allocationSize
@@ -206,8 +228,19 @@ public class WinFspFileSystem extends WinFspStubFS {
     }
 
     @Override
-    public FileInfo setBasicInfo(OpenContext ctx, Set<FileAttributes> fileAttributes, WinSysTime creationTime, WinSysTime lastAccessTime, WinSysTime lastWriteTime, WinSysTime changeTime) throws NTStatusException {
-        log.info("SET BASIC INFO - ctx={}, fileAttributes={}, creationTime={}, lastAccessTime={}, lastWriteTime={}, changeTime={}", ctx, fileAttributes, creationTime, lastAccessTime, lastWriteTime, changeTime);
+    public FileInfo setBasicInfo(
+            OpenContext ctx,
+            Set<FileAttributes> fileAttributes,
+            WinSysTime creationTime,
+            WinSysTime lastAccessTime,
+            WinSysTime lastWriteTime,
+            WinSysTime changeTime
+    ) throws NTStatusException {
+        log.info(
+                "SET BASIC INFO - ctx={}, fileAttributes={}, creationTime={}, " +
+                        "lastAccessTime={}, lastWriteTime={}, changeTime={}",
+                ctx, fileAttributes, creationTime, lastAccessTime, lastWriteTime, changeTime
+        );
 
         synchronized (cacheLock) {
             return getFileInfo(ctx);
@@ -252,7 +285,7 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("GET SECURITY - ctx={}", ctx);
 
         synchronized (cacheLock) {
-            return securityService.getSecurity(ctx);
+            return securityService.getSecurity(ctx, volumeResult.volumeLabel());
         }
     }
 
@@ -261,16 +294,20 @@ public class WinFspFileSystem extends WinFspStubFS {
         log.info("SET SECURITY - ctx={}, securityDescriptor={}", ctx, securityDescriptor);
 
         synchronized (cacheLock) {
-            securityService.setSecurity(ctx, securityDescriptor);
+            securityService.setSecurity(ctx, securityDescriptor, volumeResult.volumeLabel());
         }
     }
 
     @Override
-    public void readDirectory(OpenContext ctx, String pattern, String marker, Predicate<FileInfo> consumer) throws NTStatusException {
+    public void readDirectory(
+            OpenContext ctx,
+            String pattern,
+            String marker,
+            Predicate<FileInfo> consumer
+    ) throws NTStatusException {
         log.info("READ DIRECTORY - ctx={}, pattern={}, marker={}, consumer={}", ctx, pattern, marker, consumer);
 
         synchronized (cacheLock) {
-
             readDirectoryService.readDirectory(ctx, pattern, marker, consumer, volumeResult.volumeLabel());
         }
     }
