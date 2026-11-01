@@ -30,7 +30,6 @@ public class MinioStorageAdapter implements StoragePort {
                             .bucket(bucket)
                             .object(file.getStorageKey())
                             .stream(new ByteArrayInputStream(bytes), bytes.length, -1)
-                            .contentType(file.getMimeType())
                             .build()
             );
             log.info(

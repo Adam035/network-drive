@@ -17,6 +17,10 @@ public class UserEntity extends BaseEntity {
     @Column(unique = true)
     private String email;
 
+    @ManyToOne
+    @JoinColumn(name = "account_tier_id")
+    private AccountTierEntity accountTier;
+
     @Enumerated(EnumType.STRING)
     private User.Role role;
 

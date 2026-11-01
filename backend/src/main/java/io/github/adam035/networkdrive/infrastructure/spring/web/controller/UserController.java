@@ -1,9 +1,9 @@
 package io.github.adam035.networkdrive.infrastructure.spring.web.controller;
 
-import io.github.adam035.networkdrive.domain.model.User;
+import io.github.adam035.networkdrive.application.dto.UpdateUserCommand;
 import io.github.adam035.networkdrive.application.usecase.GetUserDetailsUseCase;
 import io.github.adam035.networkdrive.application.usecase.UpdateUserUseCase;
-import io.github.adam035.networkdrive.infrastructure.spring.web.mapper.UserAssembler;
+import io.github.adam035.networkdrive.infrastructure.spring.web.mapper.UpdateUserMapper;
 import io.github.adam035.networkdrive.infrastructure.spring.web.dto.UpdateUserRequest;
 import io.github.adam035.networkdrive.infrastructure.spring.web.dto.UserDetailsResponse;
 import io.github.adam035.networkdrive.infrastructure.spring.web.mapper.UserDetailsMapper;
@@ -21,7 +21,7 @@ public class UserController {
 
     private final UserDetailsMapper userDetailsMapper;
 
-    private final UserAssembler userAssembler;
+    private final UpdateUserMapper updateUserMapper;
 
     @GetMapping("/{userId}")
     public UserDetailsResponse getUserDetail(@PathVariable String userId) {
@@ -29,9 +29,9 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
-    public UserDetailsResponse getUserDetail(@PathVariable String userId, @RequestBody UpdateUserRequest updateUserRequest) {
-        User user = userAssembler.mapToUser(userId, updateUserRequest);
-        return userDetailsMapper.mapToUserDetailsResponse(updateUserUseCase.updateUser(user));
+    public UserDetailsResponse updateUser(@PathVariable String userId, @RequestBody UpdateUserRequest updateUserRequest) {
+        UpdateUserCommand updateUserCommand = updateUserMapper.mapToUpdateUserCommand(userId, updateUserRequest);
+        return userDetailsMapper.mapToUserDetailsResponse(updateUserUseCase.updateUser(updateUserCommand));
     }
 
 }

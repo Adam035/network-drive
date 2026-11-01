@@ -11,6 +11,8 @@ public class User {
 
     private String email;
 
+    private AccountTier accountTier;
+
     private Role role;
 
     public enum Role {

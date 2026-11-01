@@ -12,7 +12,6 @@ public interface FileUploadMapper {
 
     @Mapping(target = "id", expression = "java(java.util.UUID.randomUUID().toString())")
     @Mapping(target = "name", source = "fileUploadCommand.path", qualifiedByName = "pathToName")
-    @Mapping(target = "mimeType", source = "fileUploadCommand.mimeType")
     @Mapping(target = "size", expression = "java((long) fileUploadCommand.bytes().length)")
     @Mapping(target = "path", source = "fileUploadCommand.path")
     @Mapping(target = "parentId", ignore = true)
