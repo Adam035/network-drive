@@ -1,16 +1,24 @@
 package io.github.adam035.networkdrive.domain.model;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+import java.time.Instant;
+
+@Getter
+@Setter
 public class AccountTier {
 
     private String id;
 
     private String name;
 
-    private Integer price;
+    private int price;
 
-    private Long maxVolumeSize;
+    private long maxVolumeSize;
+
+    private Instant createdAt;
+
+    private Instant updatedAt;
 
 }

@@ -1,11 +1,9 @@
 package io.github.adam035.networkdrive.infrastructure.persistence.entity;
 
+import io.github.adam035.networkdrive.domain.model.User;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Data
 @Entity
@@ -19,14 +17,11 @@ public class UserEntity extends BaseEntity {
     @Column(unique = true)
     private String email;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_tier_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "account_tier_id")
     private AccountTierEntity accountTier;
 
-    @OneToMany(mappedBy = "recipient")
-    private Set<ShareEntity> receivedShares = new HashSet<>();
-
-    @OneToMany(mappedBy = "owner")
-    private Set<ShareEntity> grantedShares = new HashSet<>();
+    @Enumerated(EnumType.STRING)
+    private User.Role role;
 
 }

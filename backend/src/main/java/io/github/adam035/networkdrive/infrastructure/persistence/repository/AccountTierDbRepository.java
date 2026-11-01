@@ -3,23 +3,23 @@ package io.github.adam035.networkdrive.infrastructure.persistence.repository;
 import io.github.adam035.networkdrive.domain.model.AccountTier;
 import io.github.adam035.networkdrive.domain.repository.AccountTierRepository;
 import io.github.adam035.networkdrive.infrastructure.persistence.mapper.AccountTierMapper;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class AccountTierDbRepository implements AccountTierRepository {
 
     private final AccountTierJpaRepository accountTierJpaRepository;
 
     private final AccountTierMapper accountTierMapper;
 
-    public final List<AccountTier> findAll() {
-        return accountTierJpaRepository.findAll().stream()
-                .map(accountTierMapper::mapToModel)
-                .toList();
+    @Override
+    public Optional<AccountTier> findByName(String name) {
+        return accountTierJpaRepository.findByName(name)
+                .map(accountTierMapper::mapToModel);
     }
 
 }

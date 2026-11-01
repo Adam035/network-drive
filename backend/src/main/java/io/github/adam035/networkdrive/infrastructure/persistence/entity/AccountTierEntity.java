@@ -2,16 +2,16 @@ package io.github.adam035.networkdrive.infrastructure.persistence.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "account_tiers")
 @EqualsAndHashCode(callSuper = true)
 public class AccountTierEntity extends BaseEntity {
-
-    private String id;
 
     private String name;
 
