@@ -14,6 +14,9 @@ public class NetworkDriveConfiguration {
     @Value("${network-drive.base-url}")
     private String baseUrl;
 
+    @Value("${network-drive.login-page-url}")
+    private String loginPageUrl;
+
     @Bean
     public RestClient networkDriveClient(JsonMapper mapper) {
         return RestClient.builder()
@@ -23,6 +26,11 @@ public class NetworkDriveConfiguration {
                     converters.addCustomConverter(new ByteArrayHttpMessageConverter());
                 })
                 .build();
+    }
+
+    @Bean
+    public String networkDriveLoginPageUrl() {
+        return loginPageUrl;
     }
 
 }
