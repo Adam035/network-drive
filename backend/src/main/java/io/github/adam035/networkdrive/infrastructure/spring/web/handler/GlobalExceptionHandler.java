@@ -1,10 +1,7 @@
 package io.github.adam035.networkdrive.infrastructure.spring.web.handler;
 
-import io.github.adam035.networkdrive.application.exception.InvalidJwtException;
-import io.github.adam035.networkdrive.application.exception.LoginException;
-import io.github.adam035.networkdrive.application.exception.RegistrationException;
+import io.github.adam035.networkdrive.application.exception.*;
 import io.github.adam035.networkdrive.domain.exception.UserAlreadyExistsException;
-import io.github.adam035.networkdrive.application.exception.UnauthorizedException;
 import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +15,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<Map<String, String>> handleUserAlreadyExistsException(UserAlreadyExistsException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(StorageResourceAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleStorageResourceAlreadyExistsException(StorageResourceAlreadyExistsException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("message", exception.getMessage()));
     }

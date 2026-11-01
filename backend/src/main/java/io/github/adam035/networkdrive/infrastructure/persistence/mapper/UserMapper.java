@@ -4,7 +4,10 @@ import io.github.adam035.networkdrive.domain.model.User;
 import io.github.adam035.networkdrive.infrastructure.persistence.entity.UserEntity;
 import org.mapstruct.Mapper;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+        componentModel = "spring",
+        uses = AccountTierMapper.class
+)
 public interface UserMapper {
 
     User mapToModel(UserEntity source);

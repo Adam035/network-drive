@@ -1,0 +1,19 @@
+spring:
+    application:
+        name: desktopfs
+
+    datasource:
+        url: jdbc:sqlite:${LOCALAPPDATA}/NetworkDrive/data/desktopfs.db
+        driver-class-name: org.sqlite.JDBC
+
+network-drive:
+    base-url: ${NETWORK_DRIVE_BASE_URL}
+
+    cache:
+        storage-resources:
+            expire-after-write: ${STORAGE_RESOURCES_EXPIRE_AFTER_WRITE}
+            maximum-size: ${STORAGE_RESOURCES_MAXIMUM_SIZE}
+
+        directory-listings:
+            expire-after-write: ${DIRECTORY_LISTINGS_EXPIRE_AFTER_WRITE}
+            maximum-size: ${DIRECTORY_LISTINGS_MAXIMUM_SIZE}

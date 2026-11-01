@@ -1,5 +1,6 @@
 package io.github.adam035.networkdrive.application.usecase;
 
+import io.github.adam035.networkdrive.application.exception.StorageResourceAlreadyExistsException;
 import io.github.adam035.networkdrive.application.exception.UnauthorizedException;
 import io.github.adam035.networkdrive.application.port.AuthUserExtractorPort;
 import io.github.adam035.networkdrive.domain.exception.StorageResourceNotFoundException;
@@ -25,6 +26,10 @@ public class CreateDirectoryUseCase {
     private final DirectoryService directoryService;
 
     public Directory createDirectory(String path) {
+        directoryRepository.findByPath(path).ifPresent(directory -> {
+                throw new StorageResourceAlreadyExistsException(path);
+            });
+
         User user = authUserExtractorPort.extractUser()
                 .orElseThrow(UserDoesNotExist::new);
 

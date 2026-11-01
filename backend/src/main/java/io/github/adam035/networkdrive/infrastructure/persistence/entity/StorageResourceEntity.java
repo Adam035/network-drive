@@ -29,4 +29,6 @@ public abstract class StorageResourceEntity extends BaseEntity {
 
     private StorageResource.Type type;
 
+    private byte[] securityDescriptor;
+
 }
