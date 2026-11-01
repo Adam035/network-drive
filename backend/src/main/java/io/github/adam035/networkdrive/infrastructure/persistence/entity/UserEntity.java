@@ -21,7 +21,4 @@ public class UserEntity extends BaseEntity {
     @JoinColumn(name = "account_tier_id")
     private AccountTierEntity accountTier;
 
-    @Enumerated(EnumType.STRING)
-    private User.Role role;
-
 }
