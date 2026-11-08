@@ -2,8 +2,10 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../../providers/AuthProvider.tsx";
+import { isOAuth2, runOAuth2Flow } from "../services/oauth2.ts";
 
 export const LoginForm = () => {
+    const TIMEOUT = 1000;
     const navigate = useNavigate();
     const { login } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
@@ -18,14 +20,21 @@ export const LoginForm = () => {
             const response = await login();
 
             if (!response) return;
-            console.log(response)
 
             if (response.authTokens) {
                 setSuccessMessage(response.message);
                 setErrorMessage("");
-                setTimeout(() => navigate("/profile"), 1000);
+
+                if (isOAuth2()) {
+                    const { code, state } = await runOAuth2Flow();
+                    setTimeout(() => navigate(`/auth/callback?code=${code}&state=${state}`), TIMEOUT);
+                    return;
+                }
+
+                setTimeout(() => navigate("/profile"), TIMEOUT);
                 return;
             }
+
             setSuccessMessage("")
             setErrorMessage(response.message);
         } catch (error) {
@@ -45,13 +54,8 @@ export const LoginForm = () => {
                 </p>
             </div>
 
-            {errorMessage ? (
-                <p className="text-error text-sm">{errorMessage}</p>
-            ) : null}
-
-            {successMessage ? (
-                <p className="text-success text-sm">{successMessage}</p>
-            ) : null}
+            {errorMessage ? (<p className="text-error text-sm">{errorMessage}</p>) : null}
+            {successMessage ? (<p className="text-success text-sm">{successMessage}</p>) : null}
 
             <div className="text-center">
                 <button
