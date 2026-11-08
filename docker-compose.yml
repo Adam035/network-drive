@@ -12,6 +12,7 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
+      - redis
       - minio
 
   postgres:
@@ -25,6 +26,18 @@ services:
       - network-drive-net
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+    container_name: network-drive-redis
+    env_file:
+      - ./redis/.env
+    ports:
+      - "6379:6379"
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\""]
+    networks:
+      - network-drive-net
     restart: unless-stopped
 
   minio:
