@@ -13,6 +13,7 @@ import java.util.Optional;
 public class AuthSession {
 
     private final SecureStorePort secureStorePort;
+
     @Setter
     private volatile String accessToken;
 
@@ -26,6 +27,14 @@ public class AuthSession {
 
     public void setRefreshToken(String refreshToken) {
         secureStorePort.put("refresh-token", refreshToken.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public Optional<String> getState() {
+        return secureStorePort.get("state").map(bytes -> new String(bytes, StandardCharsets.UTF_8));
+    }
+
+    public void setState(String state) {
+        secureStorePort.put("state", state.getBytes(StandardCharsets.UTF_8));
     }
 
 }

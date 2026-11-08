@@ -1,7 +1,7 @@
 package io.github.adam035.desktopfs.application.port;
 
-public interface LoginPort {
+public interface OAuth2Port {
 
-    void login();
+    void authorize();
 
 }

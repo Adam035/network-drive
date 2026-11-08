@@ -1,4 +1,4 @@
-package io.github.adam035.desktopfs.infrastructure.dpapi.adapter;
+package io.github.adam035.desktopfs.infrastructure.security.adapter;
 
 import com.sun.jna.platform.win32.Crypt32Util;
 import io.github.adam035.desktopfs.application.port.SecureStorePort;

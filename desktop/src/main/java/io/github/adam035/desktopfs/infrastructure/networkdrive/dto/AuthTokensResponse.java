@@ -1,6 +1,6 @@
 package io.github.adam035.desktopfs.infrastructure.networkdrive.dto;
 
-public record RotateAuthTokensResponse(
+public record AuthTokensResponse(
         String accessToken,
         String refreshToken
 ) {

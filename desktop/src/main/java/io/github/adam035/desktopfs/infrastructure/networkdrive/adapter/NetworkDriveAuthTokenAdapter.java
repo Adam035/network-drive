@@ -2,8 +2,9 @@ package io.github.adam035.desktopfs.infrastructure.networkdrive.adapter;
 
 import io.github.adam035.desktopfs.application.auth.AuthSession;
 import io.github.adam035.desktopfs.application.port.AuthTokenPort;
+import io.github.adam035.desktopfs.infrastructure.networkdrive.dto.ExchangeCodeRequest;
 import io.github.adam035.desktopfs.infrastructure.networkdrive.dto.RotateAuthTokensRequest;
-import io.github.adam035.desktopfs.infrastructure.networkdrive.dto.RotateAuthTokensResponse;
+import io.github.adam035.desktopfs.infrastructure.networkdrive.dto.AuthTokensResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -18,18 +19,33 @@ public class NetworkDriveAuthTokenAdapter implements AuthTokenPort {
 
     @Override
     public void rotateAuthTokens(String refreshToken) {
-        RotateAuthTokensResponse rotateAuthTokensResponse = networkDriveClient.post()
+        AuthTokensResponse authTokensResponse = networkDriveClient.post()
                 .uri("/api/auth/token/rotate")
                 .body(new RotateAuthTokensRequest(refreshToken))
                 .retrieve()
-                .body(RotateAuthTokensResponse.class);
+                .body(AuthTokensResponse.class);
 
-        if (rotateAuthTokensResponse == null) {
+        if (authTokensResponse == null) {
             throw new IllegalStateException("Failed to rotate auth tokens");
         }
 
-        authSession.setAccessToken(rotateAuthTokensResponse.accessToken());
-        authSession.setRefreshToken(rotateAuthTokensResponse.refreshToken());
+        authSession.setAccessToken(authTokensResponse.accessToken());
+        authSession.setRefreshToken(authTokensResponse.refreshToken());
+    }
+
+    public void exchangeCode(String code) {
+        AuthTokensResponse authTokensResponse = networkDriveClient.post()
+                .uri("/api/auth/token/exchange")
+                .body(new ExchangeCodeRequest(code))
+                .retrieve()
+                .body(AuthTokensResponse.class);
+
+        if (authTokensResponse == null) {
+            throw new IllegalStateException("Failed to rotate auth tokens");
+        }
+
+        authSession.setAccessToken(authTokensResponse.accessToken());
+        authSession.setRefreshToken(authTokensResponse.refreshToken());
     }
 
 }
