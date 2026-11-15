@@ -26,7 +26,7 @@ export const LoginForm = () => {
                 setErrorMessage("");
 
                 if (isOAuth2()) {
-                    const { code, state } = await runOAuth2Flow();
+                    const { code, state } = await runOAuth2Flow(response.authTokens.accessToken);
                     setTimeout(() => navigate(`/auth/callback?code=${code}&state=${state}`), TIMEOUT);
                     return;
                 }

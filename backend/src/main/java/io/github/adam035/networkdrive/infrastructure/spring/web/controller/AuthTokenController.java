@@ -1,5 +1,7 @@
 package io.github.adam035.networkdrive.infrastructure.spring.web.controller;
 
+import io.github.adam035.networkdrive.application.dto.ExchangeCodeCommand;
+import io.github.adam035.networkdrive.application.usecase.ExchangeCodeUseCode;
 import io.github.adam035.networkdrive.infrastructure.spring.web.dto.AuthTokensResponse;
 import io.github.adam035.networkdrive.application.usecase.RotateTokensUseCase;
 import io.github.adam035.networkdrive.infrastructure.spring.web.mapper.AuthTokenMapper;
@@ -17,6 +19,8 @@ import java.time.Duration;
 public class AuthTokenController {
 
     private final RotateTokensUseCase rotateTokensUseCase;
+
+    private final ExchangeCodeUseCode exchangeCodeUseCode;
 
     private final AuthTokenMapper authTokenMapper;
 
@@ -46,6 +50,11 @@ public class AuthTokenController {
                 .header(HttpHeaders.SET_COOKIE, access.toString())
                 .header(HttpHeaders.SET_COOKIE, refresh.toString())
                 .body(authTokensResponse);
+    }
+
+    @PostMapping("/exchange-code")
+    public AuthTokensResponse exchangeCode(ExchangeCodeCommand exchangeCodeCommand) {
+        return authTokenMapper.mapToAuthTokensResponse(exchangeCodeUseCode.exchangeCode(exchangeCodeCommand));
     }
 
 }

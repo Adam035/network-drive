@@ -8,10 +8,10 @@ export const isOAuth2 = (): boolean => {
         .every(key => params.has(key));
 };
 
-export const runOAuth2Flow = async (): Promise<OAuth2Response> => {
+export const runOAuth2Flow = async (accessToken: String): Promise<OAuth2Response> => {
     try {
         const params = new URLSearchParams(window.location.search);
-        const { code } = await authorize(params);
+        const { code } = await authorize(params, accessToken);
         const state = params.get("state") || "";
 
         return { code, state };
