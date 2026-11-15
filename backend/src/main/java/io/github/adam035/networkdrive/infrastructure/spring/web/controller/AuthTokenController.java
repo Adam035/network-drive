@@ -53,7 +53,7 @@ public class AuthTokenController {
     }
 
     @PostMapping("/exchange-code")
-    public AuthTokensResponse exchangeCode(ExchangeCodeCommand exchangeCodeCommand) {
+    public AuthTokensResponse exchangeCode(@RequestBody ExchangeCodeCommand exchangeCodeCommand) {
         return authTokenMapper.mapToAuthTokensResponse(exchangeCodeUseCode.exchangeCode(exchangeCodeCommand));
     }
 

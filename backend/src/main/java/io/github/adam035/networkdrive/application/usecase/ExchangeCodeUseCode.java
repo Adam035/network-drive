@@ -39,7 +39,7 @@ public class ExchangeCodeUseCode {
     private boolean verifyCode(String codeChallenge, String codeVerifier) {
         byte[] digest = messageDigest.digest(codeVerifier.getBytes(StandardCharsets.UTF_8));
 
-        return Base64.getEncoder()
+        return Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString(digest)
                 .equals(codeChallenge);
