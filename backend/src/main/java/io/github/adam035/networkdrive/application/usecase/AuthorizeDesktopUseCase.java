@@ -63,7 +63,7 @@ public class AuthorizeDesktopUseCase {
         byte[] codeBytes = new byte[32];
         secureRandom.nextBytes(codeBytes);
 
-        return Base64.getEncoder()
+        return Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString(codeBytes);
     }
