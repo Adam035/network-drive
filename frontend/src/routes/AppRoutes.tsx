@@ -4,6 +4,7 @@ import { Login } from "../pages/Login.tsx";
 import { Register } from "../pages/Register.tsx";
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute.tsx";
 import { Profile } from "../pages/Profile.tsx";
+import { Callback } from "../pages/Callback.tsx";
 
 export const AppRoutes = () => {
     return (
@@ -16,6 +17,7 @@ export const AppRoutes = () => {
                 <Route path="auth">
                     <Route path="login" element={<Login />} />
                     <Route path="register" element={<Register />} />
+                    <Route path="callback" element={<Callback />} />
                 </Route>
             </Route>
         </Routes>

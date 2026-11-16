@@ -1,5 +1,6 @@
 package io.github.adam035.desktopfs.infrastructure.networkdrive.adapter;
 
+import io.github.adam035.desktopfs.application.auth.AuthSession;
 import io.github.adam035.desktopfs.application.port.FilePort;
 import io.github.adam035.desktopfs.infrastructure.networkdrive.dto.FileUploadRequest;
 import lombok.RequiredArgsConstructor;
@@ -11,10 +12,15 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public class NetworkDriveFileAdapter implements FilePort {
 
+    private final AuthSession authSession;
+
     private final RestClient networkDriveClient;
 
     @Override
     public byte[] downloadFile(String path, long offset, int length) {
+        String authToken = authSession.getAccessToken()
+                .orElseThrow(() -> new IllegalStateException("Access token is not available"));
+
         return networkDriveClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/files".concat(path))
@@ -22,6 +28,7 @@ public class NetworkDriveFileAdapter implements FilePort {
                         .queryParam("length", length)
                         .build()
                 )
+                .header("Authorization", "Bearer ".concat(authToken))
                 .retrieve()
                 .body(byte[].class);
     }
@@ -29,8 +36,12 @@ public class NetworkDriveFileAdapter implements FilePort {
     @Override
     @CacheEvict(cacheNames = "storageResources", allEntries = true)
     public void uploadFile(String path, byte[] bytes) {
+        String authToken = authSession.getAccessToken()
+                .orElseThrow(() -> new IllegalStateException("Access token is not available"));
+
         networkDriveClient.post()
                 .uri("/files")
+                .header("Authorization", "Bearer ".concat(authToken))
                 .body(new FileUploadRequest(path, bytes))
                 .retrieve()
                 .toBodilessEntity();
