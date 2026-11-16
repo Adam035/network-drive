@@ -8,8 +8,12 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Objects;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -20,6 +24,8 @@ public class StartApplicationUseCase {
     private final ApplicationArguments applicationArguments;
 
     private final AuthSession authSession;
+
+    private final SecureStorePort secureStorePort;
 
     private final AuthTokenPort authTokenPort;
 
@@ -32,12 +38,16 @@ public class StartApplicationUseCase {
     private final VolumeService volumeService;  
 
     public void startApplication() {
-        if (isCallback()) {
-            String code = Objects.requireNonNull(applicationArguments.getOptionValues("code")).getFirst();
-            String state = Objects.requireNonNull(applicationArguments.getOptionValues("state")).getFirst();
+        Optional<URI> callback = applicationArguments.getNonOptionArgs().stream()
+                .filter(arg -> arg.startsWith("network-drive:"))
+                .map(URI::create)
+                .findFirst();
+
+        if (callback.isPresent()) {
+            String code = getParameter(callback.get(), "code");
+            String state = getParameter(callback.get(), "state");
 
             authorize(code, state);
-            return;
         }
 
         authSession.getRefreshToken()
@@ -62,22 +72,31 @@ public class StartApplicationUseCase {
         System.exit(exitCode);
     }
 
-    private boolean isCallback() {
-        return applicationArguments.containsOption("callback")
-                && applicationArguments.containsOption("code")
-                && applicationArguments.containsOption("state");
+    private String getParameter(URI uri, String parameter) {
+        return UriComponentsBuilder.fromUri(uri)
+                .build()
+                .getQueryParams()
+                .getFirst(parameter);
     }
 
     private void authorize(String code, String state) {
-        Boolean stateMatches = authSession.getState()
-                .map(storedState -> storedState.equals(state))
+        Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
+
+        boolean stateMatches = secureStorePort.get("state")
+                .map(storedState -> encoder.encodeToString(storedState).equals(state))
                 .orElse(false);
 
         if (!stateMatches) {
             throw new IllegalStateException("State does not match"); // TODO
         }
 
-        authTokenPort.exchangeCode(code);
+        secureStorePort.get("code-verifier").ifPresentOrElse(
+                storedCodeVerifier ->
+                        authTokenPort.exchangeCode(code, new String(storedCodeVerifier, StandardCharsets.UTF_8)),
+                () -> {
+                     throw new IllegalStateException("Code verifier not found"); // TODO
+                }
+        );
     }
 
 }

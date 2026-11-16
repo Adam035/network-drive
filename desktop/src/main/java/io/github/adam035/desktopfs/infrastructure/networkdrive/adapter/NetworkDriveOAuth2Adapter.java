@@ -8,6 +8,7 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.awt.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -15,6 +16,8 @@ import java.util.Base64;
 @Component
 @RequiredArgsConstructor
 public class NetworkDriveOAuth2Adapter implements OAuth2Port {
+
+    private final static Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
 
     private final SecureRandom secureRandom;
 
@@ -29,8 +32,8 @@ public class NetworkDriveOAuth2Adapter implements OAuth2Port {
         if (!isDesktopSupported()) {
             throw new UnsupportedOperationException("Desktop is not supported on this platform");
         }
-
-        byte[] codeChallenge = messageDigest.digest(generateCodeVerifier());
+        
+        byte[] codeChallenge = generateCodeChallenge();
         byte[] state = generateState();
 
         try {
@@ -44,12 +47,15 @@ public class NetworkDriveOAuth2Adapter implements OAuth2Port {
         return Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE);
     }
 
-    private byte[] generateCodeVerifier() {
-        byte[] codeVerifier = new byte[32];
-        secureRandom.nextBytes(codeVerifier);
-        secureStorePort.put("code-verifier", codeVerifier);
+    private byte[] generateCodeChallenge() {
+        byte[] bytes = new byte[32];
+        secureRandom.nextBytes(bytes);
 
-        return codeVerifier;
+        String codeVerifier = ENCODER.encodeToString(bytes);
+        byte[] codeVerifierBytes = codeVerifier.getBytes(StandardCharsets.UTF_8);
+        secureStorePort.put("code-verifier", codeVerifierBytes);
+
+        return messageDigest.digest(codeVerifierBytes);
     }
 
     private byte[] generateState() {
@@ -61,16 +67,14 @@ public class NetworkDriveOAuth2Adapter implements OAuth2Port {
     }
 
     private URI buildUri(byte[] codeChallenge, byte[] state) {
-        Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
-
         return new DefaultUriBuilderFactory().builder()
                 .path(loginPageUrl)
                 .queryParam("client_id", "desktop")
                 .queryParam("redirect_uri", "network-drive://callback")
                 .queryParam("response_type", "code")
-                .queryParam("code_challenge", encoder.encodeToString(codeChallenge))
+                .queryParam("code_challenge", ENCODER.encodeToString(codeChallenge))
                 .queryParam("code_challenge_method", "S256")
-                .queryParam("state", encoder.encodeToString(state))
+                .queryParam("state", ENCODER.encodeToString(state))
                 .build();
     }
 

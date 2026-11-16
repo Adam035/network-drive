@@ -4,6 +4,6 @@ public interface AuthTokenPort {
 
     void rotateAuthTokens(String refreshToken);
 
-    void exchangeCode(String code);
+    void exchangeCode(String code, String codeVerifier);
 
 }

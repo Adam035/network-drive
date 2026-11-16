@@ -29,12 +29,4 @@ public class AuthSession {
         secureStorePort.put("refresh-token", refreshToken.getBytes(StandardCharsets.UTF_8));
     }
 
-    public Optional<String> getState() {
-        return secureStorePort.get("state").map(bytes -> new String(bytes, StandardCharsets.UTF_8));
-    }
-
-    public void setState(String state) {
-        secureStorePort.put("state", state.getBytes(StandardCharsets.UTF_8));
-    }
-
 }

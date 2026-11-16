@@ -3,9 +3,9 @@ package io.github.adam035.desktopfs.infrastructure.networkdrive.adapter;
 import io.github.adam035.desktopfs.application.auth.AuthSession;
 import io.github.adam035.desktopfs.application.port.AuthTokenPort;
 import io.github.adam035.desktopfs.infrastructure.networkdrive.dto.ExchangeCodeRequest;
-import io.github.adam035.desktopfs.infrastructure.networkdrive.dto.RotateAuthTokensRequest;
 import io.github.adam035.desktopfs.infrastructure.networkdrive.dto.AuthTokensResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -21,7 +21,7 @@ public class NetworkDriveAuthTokenAdapter implements AuthTokenPort {
     public void rotateAuthTokens(String refreshToken) {
         AuthTokensResponse authTokensResponse = networkDriveClient.post()
                 .uri("/api/auth/token/rotate")
-                .body(new RotateAuthTokensRequest(refreshToken))
+                .header(HttpHeaders.COOKIE, "refreshToken=".concat(refreshToken))
                 .retrieve()
                 .body(AuthTokensResponse.class);
 
@@ -33,10 +33,11 @@ public class NetworkDriveAuthTokenAdapter implements AuthTokenPort {
         authSession.setRefreshToken(authTokensResponse.refreshToken());
     }
 
-    public void exchangeCode(String code) {
+    @Override
+    public void exchangeCode(String code, String codeVerifier) {
         AuthTokensResponse authTokensResponse = networkDriveClient.post()
-                .uri("/api/auth/token/exchange")
-                .body(new ExchangeCodeRequest(code))
+                .uri("/api/auth/token/exchange-code")
+                .body(new ExchangeCodeRequest(code, codeVerifier))
                 .retrieve()
                 .body(AuthTokensResponse.class);
 
