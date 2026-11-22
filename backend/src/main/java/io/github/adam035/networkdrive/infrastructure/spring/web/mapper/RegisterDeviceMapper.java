@@ -8,7 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface RegisterDeviceMapper {
 
-    @Mapping(target = "deviceId", source = "deviceId")
     @Mapping(
             target = "publicKey",
             expression = "java(java.util.Base64.getUrlDecoder().decode(registerDeviceRequest.publicKeyBase64Url()))"

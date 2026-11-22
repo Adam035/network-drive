@@ -35,7 +35,9 @@ public class StartApplicationUseCase {
 
     private final VolumePort volumePort;
 
-    private final VolumeService volumeService;  
+    private final VolumeService volumeService;
+
+    private final DeviceRegistrationPort deviceRegistrationPort;
 
     public void startApplication() {
         Optional<URI> callback = applicationArguments.getNonOptionArgs().stream()
@@ -58,6 +60,10 @@ public class StartApplicationUseCase {
                             exit();
                         }
                 );
+
+        if (secureStorePort.get("device-id").isEmpty()) {
+            deviceRegistrationPort.registerDevice();
+        }
 
         mountVolumes();
     }

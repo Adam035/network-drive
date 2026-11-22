@@ -1,5 +1,6 @@
 package io.github.adam035.networkdrive.infrastructure.spring.web.controller;
 
+import io.github.adam035.networkdrive.application.dto.RegisterDeviceResult;
 import io.github.adam035.networkdrive.application.usecase.RegisterDeviceUseCase;
 import io.github.adam035.networkdrive.infrastructure.spring.web.dto.RegisterDeviceRequest;
 import io.github.adam035.networkdrive.infrastructure.spring.web.mapper.RegisterDeviceMapper;
@@ -19,8 +20,10 @@ public class DeviceController {
     private final RegisterDeviceUseCase registerDeviceUseCase;
 
     @PostMapping("/register")
-    public void register(@RequestBody RegisterDeviceRequest registerDeviceRequest) {
-        registerDeviceUseCase.registerDevice(registerDeviceMapper.mapToRegisterDeviceCommand(registerDeviceRequest));
+    public RegisterDeviceResult register(@RequestBody RegisterDeviceRequest registerDeviceRequest) {
+        return registerDeviceUseCase.registerDevice(
+                registerDeviceMapper.mapToRegisterDeviceCommand(registerDeviceRequest)
+        );
     }
 
 }

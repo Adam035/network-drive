@@ -1,7 +1,7 @@
 package io.github.adam035.networkdrive.application.usecase;
 
 import io.github.adam035.networkdrive.application.dto.RegisterDeviceCommand;
-import io.github.adam035.networkdrive.application.exception.DeviceAlreadyRegisteredException;
+import io.github.adam035.networkdrive.application.dto.RegisterDeviceResult;
 import io.github.adam035.networkdrive.application.port.AuthUserExtractorPort;
 import io.github.adam035.networkdrive.domain.exception.UserDoesNotExist;
 import io.github.adam035.networkdrive.domain.model.Device;
@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -20,22 +21,20 @@ public class RegisterDeviceUseCase {
 
     private final DeviceRepository deviceRepository;
 
-    public void registerDevice(RegisterDeviceCommand registerDeviceCommand) {
+    public RegisterDeviceResult registerDevice(RegisterDeviceCommand registerDeviceCommand) {
         User user = authUserExtractorPort.extractUser()
                 .orElseThrow(UserDoesNotExist::new);
 
-        deviceRepository.findById(registerDeviceCommand.deviceId())
-                .orElseThrow(DeviceAlreadyRegisteredException::new);
+        Device device = createDevice(user, registerDeviceCommand.publicKey());
+        String deviceId = deviceRepository.save(device).getId();
 
-        Device device = createDevice(registerDeviceCommand.deviceId(), user, registerDeviceCommand.publicKey());
-
-        deviceRepository.save(device);
+        return new RegisterDeviceResult(deviceId);
     }
 
-    private Device createDevice(String deviceId, User user, byte[] publicKey) {
+    private Device createDevice(User user, byte[] publicKey) {
         Device device = new Device();
 
-        device.setId(deviceId);
+        device.setId(UUID.randomUUID().toString());
         device.setUser(user);
         device.setPublicKey(publicKey);
         device.setCreatedAt(Instant.now());
