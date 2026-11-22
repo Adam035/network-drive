@@ -49,4 +49,10 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", exception.getMessage()));
     }
 
+    @ExceptionHandler(DeviceAlreadyRegisteredException.class)
+    public ResponseEntity<Map<String, String>> handleDeviceAlreadyRegisteredException(DeviceAlreadyRegisteredException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", exception.getMessage()));
+    }
+
 }
